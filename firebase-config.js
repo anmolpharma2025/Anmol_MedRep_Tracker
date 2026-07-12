@@ -17,6 +17,6 @@ const FIREBASE_CONFIG = {
 //  Get it from: console.cloud.google.com
 //  Enable: Maps JavaScript API + Geocoding API
 // ============================================================
-const GOOGLE_MAPS_API_KEY = "AIzaSyBgfd-oKaHPrbhGpkDwP1DWqvUO-_jBzVc";
+const GOOGLE_MAPS_API_KEY = "AIzaSyDZKMfewNN5RFGMwJeyVAu5n32o-QTluUo";
 
 
