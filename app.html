@@ -251,6 +251,57 @@ body{display:flex;flex-direction:column}
 .toast{position:fixed;bottom:calc(72px + var(--sb));left:50%;transform:translateX(-50%) translateY(12px);background:#1a1a18;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:all .2s;pointer-events:none;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #screen-admin .toast{bottom:16px}
+
+/* ── CHAT ───────────────────────────────────────────── */
+.chat-fab{position:fixed;bottom:calc(80px + var(--sb));right:16px;width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(24,95,165,.45);z-index:800;transition:transform .2s}
+.chat-fab:hover{transform:scale(1.08)}
+.chat-fab.visible{display:flex}
+.chat-fab-badge{position:absolute;top:-2px;right:-2px;background:#E24B4A;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.chat-fab-badge.on{display:flex}
+#screen-admin .chat-fab{bottom:16px}
+
+.chat-panel{position:fixed;bottom:calc(144px + var(--sb));right:16px;width:320px;height:440px;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--rl);box-shadow:0 8px 32px rgba(0,0,0,.18);display:none;flex-direction:column;z-index:800;overflow:hidden}
+.chat-panel.open{display:flex}
+@media(max-width:400px){.chat-panel{width:calc(100vw - 24px);right:12px}}
+#screen-admin .chat-panel{bottom:72px}
+
+.chat-header{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--blue);color:#fff;flex-shrink:0}
+.chat-header-title{font-size:14px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-back{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:18px;padding:2px 6px;line-height:1;flex-shrink:0}
+.chat-back:hover{color:#fff}
+.chat-close{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:20px;padding:2px 6px;line-height:1;flex-shrink:0}
+.chat-close:hover{color:#fff}
+
+.chat-rooms{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.chat-room-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s}
+.chat-room-item:hover{background:var(--bg2)}
+.chat-room-item:last-child{border-bottom:none}
+.chat-room-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.chat-room-info{flex:1;min-width:0}
+.chat-room-name{font-size:13px;font-weight:600;color:var(--text)}
+.chat-room-preview{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.chat-room-meta{text-align:right;flex-shrink:0}
+.chat-room-time{font-size:10px;color:var(--text3)}
+.chat-room-unread{width:18px;height:18px;border-radius:50%;background:#E24B4A;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:3px;margin-left:auto}
+
+.chat-messages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.chat-msg{max-width:82%;display:flex;flex-direction:column;gap:2px}
+.chat-msg.mine{align-self:flex-end;align-items:flex-end}
+.chat-msg.theirs{align-self:flex-start;align-items:flex-start}
+.chat-msg-sender{font-size:10px;color:var(--text3);font-weight:600;padding:0 4px}
+.chat-msg-bubble{padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.45;word-break:break-word}
+.chat-msg.mine .chat-msg-bubble{background:var(--blue);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.theirs .chat-msg-bubble{background:var(--bg2);color:var(--text);border-bottom-left-radius:4px;border:0.5px solid var(--border)}
+.chat-msg-time{font-size:10px;color:var(--text3);padding:0 4px}
+
+.chat-input-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:0.5px solid var(--border);flex-shrink:0;background:var(--bg)}
+.chat-input{flex:1;padding:8px 12px;border:0.5px solid var(--border2);border-radius:20px;background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:none;line-height:1.4;max-height:80px;overflow-y:auto}
+.chat-input:focus{border-color:var(--blue)}
+.chat-send-btn{width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
+.chat-send-btn:hover{opacity:.85}
+.chat-send-btn:active{opacity:.65}
+.chat-empty{text-align:center;padding:24px;color:var(--text3);font-size:13px;margin:auto}
+.chat-date-divider{text-align:center;font-size:10px;color:var(--text3);padding:4px 0;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .creds-section{margin-bottom:14px}
 .creds-section-title{font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px;padding:8px 0 4px;border-bottom:0.5px solid var(--border)}
 .creds-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -668,6 +719,45 @@ body{display:flex;flex-direction:column}
 
 <div class="toast" id="toast"></div>
 
+<!-- ── CHAT ──────────────────────────────────────────────── -->
+<!-- Floating action button -->
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()" aria-label="Open chat">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+  </svg>
+  <span class="chat-fab-badge" id="chat-badge"></span>
+</button>
+
+<!-- Chat panel -->
+<div class="chat-panel" id="chat-panel">
+  <!-- Room list view -->
+  <div id="chat-view-rooms" style="display:flex;flex-direction:column;height:100%">
+    <div class="chat-header">
+      <div class="chat-header-title">Messages</div>
+      <button class="chat-close" onclick="toggleChat()">×</button>
+    </div>
+    <div class="chat-rooms" id="chat-rooms-list"></div>
+  </div>
+  <!-- Conversation view -->
+  <div id="chat-view-convo" style="display:none;flex-direction:column;height:100%">
+    <div class="chat-header">
+      <button class="chat-back" onclick="showChatRooms()">‹</button>
+      <div class="chat-header-title" id="chat-convo-title"></div>
+      <div id="chat-convo-online" style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0"></div>
+      <button class="chat-close" onclick="toggleChat()">×</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input" placeholder="Type a message…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
+      <button class="chat-send-btn" onclick="sendMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDKs -->
 <script src="firebase-config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -868,14 +958,21 @@ function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classL
 function showRep(){
   showScreen('screen-rep');
   document.getElementById('rep-topbar-title').textContent=loggedRepName||document.getElementById('co-name').textContent;
-  // show Add Rep card only if admin is viewing rep screen
   const arc=document.getElementById('add-rep-card');
   if(arc)arc.style.display=loggedRole==='admin'?'':'none';
   populateRepSelects();
   if(loggedRepId){setTimeout(()=>{['gps-rep','f-rep'].forEach(s=>{const el=document.getElementById(s);if(el)el.value=loggedRepId;});},600);}
   renderRepScreen();
+  showChat();
+  setTimeout(startChatUnreadListener,1000);
 }
-function showAdmin(){showScreen('screen-admin');renderAdminAll();setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);}
+function showAdmin(){
+  showScreen('screen-admin');
+  renderAdminAll();
+  setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);
+  showChat();
+  setTimeout(startChatUnreadListener,1000);
+}
 function switchToAdmin(){if(loggedRole==='admin')showAdmin();}
 function switchToRep(){if(loggedRole==='rep'||loggedRole==='admin')showRep();}
 function logout(){
@@ -884,6 +981,7 @@ function logout(){
   document.getElementById('login-btn').textContent='Sign In';
   document.getElementById('login-btn').disabled=false;
   document.getElementById('pass-in').value='';
+  hideChat();
   showScreen('screen-login');
 }
 
@@ -1892,6 +1990,199 @@ function renderItinMap(){
     });
   }
   stops.length>1?itinMap.fitBounds(bounds,40):itinMap.panTo({lat:stops[0].lat,lng:stops[0].lng});
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CHAT SYSTEM
+// ─────────────────────────────────────────────────────────────
+let chatOpen=false, chatRoomId=null, chatListener=null;
+let unreadCounts={}, lastSeenTimestamps={};
+
+function chatUserId(){return loggedRepId||'admin';}
+function chatUserName(){return loggedRepName||'Admin';}
+function chatUserColor(id){
+  const colors=['#185FA5','#1D9E75','#D85A30','#7F77DD','#BA7517','#993556'];
+  let h=0;for(let i=0;i<(id||'').length;i++)h=(h*31+id.charCodeAt(i))&0xFFFFFF;
+  return colors[Math.abs(h)%colors.length];
+}
+
+function showChat(){
+  const fab=document.getElementById('chat-fab');
+  if(fab)fab.classList.add('visible');
+}
+function hideChat(){
+  const fab=document.getElementById('chat-fab');
+  if(fab)fab.classList.remove('visible');
+  closeChatPanel();
+}
+function toggleChat(){
+  chatOpen=!chatOpen;
+  const panel=document.getElementById('chat-panel');
+  if(chatOpen){panel.classList.add('open');showChatRooms();}
+  else{panel.classList.remove('open');if(chatListener){chatListener();chatListener=null;}}
+}
+function closeChatPanel(){
+  chatOpen=false;
+  const panel=document.getElementById('chat-panel');
+  if(panel)panel.classList.remove('open');
+  if(chatListener){chatListener();chatListener=null;}
+}
+
+function buildRooms(){
+  // Group chat always present
+  const rooms=[{id:'group_all',name:'All Team',type:'group',icon:'👥',color:'#185FA5'}];
+  // DM rooms: one per other rep/admin
+  const me=chatUserId();
+  reps.forEach(r=>{
+    const rid=r.fbKey||r.id;
+    if(rid===me)return;
+    const dmId=[me,rid].sort().join('_dm_');
+    rooms.push({id:dmId,name:r.name,type:'dm',icon:inits(r.name),color:chatUserColor(rid),repId:rid});
+  });
+  if(loggedRole==='rep'){
+    const adminDmId=[me,'admin'].sort().join('_dm_');
+    rooms.push({id:adminDmId,name:'Admin',type:'dm',icon:'★',color:'#0C447C',repId:'admin'});
+  }
+  return rooms;
+}
+
+function fChatTime(ts){
+  if(!ts)return'';
+  const d=new Date(ts),n=new Date();
+  const isToday=d.toDateString()===n.toDateString();
+  if(isToday)return d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+}
+
+function showChatRooms(){
+  chatRoomId=null;
+  if(chatListener){chatListener();chatListener=null;}
+  document.getElementById('chat-view-rooms').style.display='flex';
+  document.getElementById('chat-view-convo').style.display='none';
+  renderChatRooms();
+}
+
+function renderChatRooms(){
+  const el=document.getElementById('chat-rooms-list');
+  const rooms=buildRooms();
+  if(!rooms.length){el.innerHTML='<div class="chat-empty">No conversations yet.</div>';return;}
+  // Load previews from Firebase
+  if(!fbReady||!db){
+    el.innerHTML=rooms.map(r=>chatRoomHTML(r,null,0)).join('');return;
+  }
+  let loaded=0;
+  const previews={};
+  rooms.forEach(r=>{
+    db.ref('chat/'+r.id+'/messages').orderByChild('ts').limitToLast(1).once('value',s=>{
+      const v=s.val();
+      if(v){const msg=Object.values(v)[0];previews[r.id]=msg;}
+      loaded++;
+      if(loaded===rooms.length){
+        el.innerHTML=rooms.map(r=>chatRoomHTML(r,previews[r.id]||null,unreadCounts[r.id]||0)).join('');
+      }
+    });
+  });
+}
+
+function chatRoomHTML(r,lastMsg,unread){
+  const preview=lastMsg?`${lastMsg.sender===chatUserName()?'You: ':''}${lastMsg.text}`:'No messages yet';
+  const timeStr=lastMsg?fChatTime(lastMsg.ts):'';
+  return`<div class="chat-room-item" onclick="openRoom('${r.id}','${r.name}','${r.type}')">
+    <div class="chat-room-av" style="background:${r.color}22;color:${r.color}">${r.icon}</div>
+    <div class="chat-room-info">
+      <div class="chat-room-name">${r.name}${r.type==='group'?' <span style="font-size:10px;color:var(--text3);font-weight:400">(group)</span>':''}</div>
+      <div class="chat-room-preview">${preview}</div>
+    </div>
+    <div class="chat-room-meta">
+      <div class="chat-room-time">${timeStr}</div>
+      ${unread>0?`<div class="chat-room-unread">${unread}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function openRoom(roomId,roomName,roomType){
+  chatRoomId=roomId;
+  document.getElementById('chat-view-rooms').style.display='none';
+  document.getElementById('chat-view-convo').style.display='flex';
+  document.getElementById('chat-convo-title').textContent=roomName;
+  document.getElementById('chat-messages').innerHTML='<div class="chat-empty">Loading…</div>';
+  document.getElementById('chat-input').value='';
+  // Reset unread
+  unreadCounts[roomId]=0;
+  updateChatBadge();
+  if(!fbReady||!db){
+    document.getElementById('chat-messages').innerHTML='<div class="chat-empty">Firebase not connected.<br>Messages need Firebase to work.</div>';
+    return;
+  }
+  // Mark seen
+  lastSeenTimestamps[roomId]=Date.now();
+  // Listen for messages
+  if(chatListener){chatListener();chatListener=null;}
+  const ref=db.ref('chat/'+roomId+'/messages').orderByChild('ts').limitToLast(60);
+  chatListener=ref.on('value',s=>{
+    const val=s.val();
+    const msgs=val?Object.values(val).sort((a,b)=>a.ts-b.ts):[];
+    renderMessages(msgs);
+  });
+}
+
+function renderMessages(msgs){
+  const el=document.getElementById('chat-messages');
+  if(!msgs.length){el.innerHTML='<div class="chat-empty">No messages yet.<br>Say hello! 👋</div>';return;}
+  let html='',lastDate='';
+  msgs.forEach(m=>{
+    const d=new Date(m.ts);
+    const dateStr=d.toDateString();
+    if(dateStr!==lastDate){
+      html+=`<div class="chat-date-divider">${d.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'})}</div>`;
+      lastDate=dateStr;
+    }
+    const mine=m.senderId===chatUserId();
+    html+=`<div class="chat-msg ${mine?'mine':'theirs'}">
+      ${!mine?`<div class="chat-msg-sender">${m.sender}</div>`:''}
+      <div class="chat-msg-bubble">${escHtml(m.text)}</div>
+      <div class="chat-msg-time">${fChatTime(m.ts)}</div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  el.scrollTop=el.scrollHeight;
+}
+
+function escHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+async function sendMessage(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();
+  if(!text||!chatRoomId)return;
+  if(!fbReady||!db){toast('Firebase not connected.');return;}
+  inp.value='';inp.style.height='auto';
+  const msg={text,sender:chatUserName(),senderId:chatUserId(),ts:Date.now()};
+  await db.ref('chat/'+chatRoomId+'/messages').push(msg);
+  // Update room last message meta
+  await db.ref('chat/'+chatRoomId+'/meta').set({lastMsg:text,lastSender:chatUserName(),ts:Date.now()});
+}
+
+function updateChatBadge(){
+  const total=Object.values(unreadCounts).reduce((s,v)=>s+v,0);
+  const badge=document.getElementById('chat-badge');
+  if(badge){badge.textContent=total>9?'9+':total;badge.classList.toggle('on',total>0);}
+}
+
+function startChatUnreadListener(){
+  if(!fbReady||!db||!loggedIn)return;
+  // Listen for new messages in all rooms and count unread
+  const rooms=buildRooms();
+  rooms.forEach(r=>{
+    db.ref('chat/'+r.id+'/messages').orderByChild('ts').startAt(Date.now()).on('child_added',s=>{
+      const m=s.val();
+      if(m&&m.senderId!==chatUserId()){
+        if(!chatOpen||chatRoomId!==r.id){
+          unreadCounts[r.id]=(unreadCounts[r.id]||0)+1;
+          updateChatBadge();
+        }
+      }
+    });
+  });
 }
 
 async function init(){
