@@ -290,42 +290,48 @@ body{display:flex;flex-direction:column}
       </button>
     </div>
 
-    <div class="lfield" id="rep-field">
-      <label>Your name</label>
-      <select id="rep-sel">
-        <option value="">— Select your name —</option>
-      </select>
-    </div>
-
-    <div class="auth-tabs">
-      <button class="auth-tab sel" id="atab-pin" onclick="setAuthMode('pin')">PIN</button>
-      <button class="auth-tab" id="atab-pass" onclick="setAuthMode('pass')">Password</button>
-    </div>
-
-    <div id="pin-section">
-      <div class="pin-dots">
-        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
-        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    <!-- Rep login: username + password -->
+    <div id="rep-login-fields">
+      <div class="lfield">
+        <label>Username</label>
+        <input type="text" id="rep-username" placeholder="Enter your username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('rep-passw').focus()">
       </div>
-      <div class="pin-grid">
-        <button class="pk" onclick="pk('1')">1</button>
-        <button class="pk" onclick="pk('2')">2<span class="ks">ABC</span></button>
-        <button class="pk" onclick="pk('3')">3<span class="ks">DEF</span></button>
-        <button class="pk" onclick="pk('4')">4<span class="ks">GHI</span></button>
-        <button class="pk" onclick="pk('5')">5<span class="ks">JKL</span></button>
-        <button class="pk" onclick="pk('6')">6<span class="ks">MNO</span></button>
-        <button class="pk" onclick="pk('7')">7<span class="ks">PQRS</span></button>
-        <button class="pk" onclick="pk('8')">8<span class="ks">TUV</span></button>
-        <button class="pk" onclick="pk('9')">9<span class="ks">WXYZ</span></button>
-        <button class="pk pk-zero" onclick="pk('0')">0</button>
-        <button class="pk pk-del" onclick="pdel()">⌫</button>
-      </div>
-    </div>
-
-    <div id="pass-section" style="display:none">
       <div class="lfield">
         <label>Password</label>
-        <input type="password" id="pass-in" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="rep-passw" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+
+    <!-- Admin login: PIN or Password -->
+    <div id="admin-login-fields" style="display:none">
+      <div class="auth-tabs">
+        <button class="auth-tab sel" id="atab-pin" onclick="setAuthMode('pin')">PIN</button>
+        <button class="auth-tab" id="atab-pass" onclick="setAuthMode('pass')">Password</button>
+      </div>
+      <div id="pin-section">
+        <div class="pin-dots">
+          <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+          <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+        </div>
+        <div class="pin-grid">
+          <button class="pk" onclick="pk('1')">1</button>
+          <button class="pk" onclick="pk('2')">2<span class="ks">ABC</span></button>
+          <button class="pk" onclick="pk('3')">3<span class="ks">DEF</span></button>
+          <button class="pk" onclick="pk('4')">4<span class="ks">GHI</span></button>
+          <button class="pk" onclick="pk('5')">5<span class="ks">JKL</span></button>
+          <button class="pk" onclick="pk('6')">6<span class="ks">MNO</span></button>
+          <button class="pk" onclick="pk('7')">7<span class="ks">PQRS</span></button>
+          <button class="pk" onclick="pk('8')">8<span class="ks">TUV</span></button>
+          <button class="pk" onclick="pk('9')">9<span class="ks">WXYZ</span></button>
+          <button class="pk pk-zero" onclick="pk('0')">0</button>
+          <button class="pk pk-del" onclick="pdel()">⌫</button>
+        </div>
+      </div>
+      <div id="pass-section" style="display:none">
+        <div class="lfield">
+          <label>Password</label>
+          <input type="password" id="pass-in" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
       </div>
     </div>
 
@@ -417,7 +423,11 @@ body{display:flex;flex-direction:column}
         <div class="field"><label>Doctor / Contact</label><input type="text" id="f-doctor" placeholder="Dr. name or facility" autocomplete="off"></div>
         <div class="field"><label>Product pitched</label>
           <select id="f-product-sel" onchange="onProductSelChange()" style="margin-bottom:4px"></select>
-          <input type="text" id="f-product-manual" placeholder="Or type product name" autocomplete="off" style="display:none">
+          <input type="text" id="f-product-manual" placeholder="Type product name" autocomplete="off" style="display:none;margin-bottom:4px">
+          <label id="f-product-save-row" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;padding:2px 0">
+            <input type="checkbox" id="f-product-save-cb" style="width:14px;height:14px;cursor:pointer">
+            Save this product to the list
+          </label>
         </div>
         <div class="field"><label>Outcome</label>
           <select id="f-outcome">
@@ -524,7 +534,9 @@ body{display:flex;flex-direction:column}
 
           <div class="settings-block">
             <div class="settings-block-title"><i class="ti ti-users" aria-hidden="true"></i> Add med rep</div>
-            <div class="creds-row"><label>Full name</label><input type="text" id="adm-r-name" placeholder="Rep name"></div>
+            <div class="creds-row"><label>Full name</label><input type="text" id="adm-r-name" placeholder="Rep full name"></div>
+            <div class="creds-row"><label>Username</label><input type="text" id="adm-r-username" placeholder="Login username" autocomplete="off"></div>
+            <div class="creds-row"><label>Password</label><input type="text" id="adm-r-password" placeholder="Login password"></div>
             <div class="creds-row"><label>Territory</label><input type="text" id="adm-r-terr" placeholder="City / region"></div>
             <div class="creds-row"><label>Target</label><input type="number" id="adm-r-target" placeholder="e.g. 30" min="1"></div>
             <button class="creds-save-btn" onclick="adminAddRep()">Add Rep</button>
@@ -679,9 +691,11 @@ function setRole(r){
   currentRole=r;currentPIN='';updPinDots();clearErr();
   document.getElementById('rbtn-rep').classList.toggle('sel',r==='rep');
   document.getElementById('rbtn-admin').classList.toggle('sel',r==='admin');
-  document.getElementById('rep-field').style.display=r==='rep'?'':'none';
+  document.getElementById('rep-login-fields').style.display=r==='rep'?'':'none';
+  document.getElementById('admin-login-fields').style.display=r==='admin'?'':'none';
   document.getElementById('login-btn').className='login-btn'+(r==='admin'?' admin-mode':'');
-  document.getElementById('pass-in').value='';
+  if(r==='rep')setTimeout(()=>document.getElementById('rep-username').focus(),80);
+  document.getElementById('pass-in')?document.getElementById('pass-in').value='':'';
 }
 function setAuthMode(m){
   authMode=m;currentPIN='';updPinDots();clearErr();
@@ -699,23 +713,36 @@ function clearErr(){document.getElementById('err-box').classList.remove('on');}
 
 function doLogin(){
   clearErr();
-  const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
-  if(currentRole==='rep'&&!document.getElementById('rep-sel').value){showErr('Select your name first.');return;}
-  const input=authMode==='pin'?currentPIN:document.getElementById('pass-in').value;
-  const expected=authMode==='pin'?creds[currentRole].pin:creds[currentRole].pass;
-  if(!input){showErr('Enter your '+(authMode==='pin'?'PIN':'password')+'.');return;}
-  if(input!==expected){showErr('Incorrect '+(authMode==='pin'?'PIN':'password')+'. Try again.');return;}
-  // Success
-  loggedRole=currentRole;
+  const btn=document.getElementById('login-btn');
+
   if(currentRole==='rep'){
-    const sel=document.getElementById('rep-sel');
-    loggedRepId=sel.value;
-    loggedRepName=sel.options[sel.selectedIndex]?.text||'Rep';
+    const username=document.getElementById('rep-username').value.trim();
+    const password=document.getElementById('rep-passw').value;
+    if(!username){showErr('Enter your username.');return;}
+    if(!password){showErr('Enter your password.');return;}
+    // Find rep by username (case-insensitive)
+    const rep=reps.find(r=>r.username&&r.username.toLowerCase()===username.toLowerCase());
+    if(!rep){showErr('Username not found. Contact your admin.');return;}
+    if(rep.password!==password){showErr('Incorrect password. Try again.');return;}
+    loggedRole='rep';
+    loggedRepId=rep.fbKey||rep.id;
+    loggedRepName=rep.name;
+  } else {
+    // Admin: PIN or password
+    const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
+    const input=authMode==='pin'?currentPIN:document.getElementById('pass-in').value;
+    const expected=authMode==='pin'?creds.admin.pin:creds.admin.pass;
+    if(!input){showErr('Enter your '+(authMode==='pin'?'PIN':'password')+'.');return;}
+    if(input!==expected){showErr('Incorrect '+(authMode==='pin'?'PIN':'password')+'. Try again.');return;}
+    loggedRole='admin';
+    loggedRepId=null;
+    loggedRepName='Admin';
   }
+
   loggedIn=true;
-  document.getElementById('login-btn').innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle"></span>Signing in…';
-  document.getElementById('login-btn').disabled=true;
-  setTimeout(()=>{currentRole==='admin'?showAdmin():showRep();},500);
+  btn.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle"></span>Signing in…';
+  btn.disabled=true;
+  setTimeout(()=>{loggedRole==='admin'?showAdmin():showRep();},500);
 }
 document.addEventListener('keydown',e=>{
   if(!loggedIn&&authMode==='pin'&&!document.getElementById('name-modal').classList.contains('on')){
@@ -1023,29 +1050,59 @@ function renderAdmRepsMini(){
   const el=document.getElementById('adm-reps-mini');if(!el)return;
   if(!reps.length){el.innerHTML='<div class="empty" style="padding:8px">No reps yet.</div>';return;}
   el.innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Current reps</div>`+
-  reps.map(r=>`<div class="li" style="padding:7px 0">
-    <div class="av" style="width:28px;height:28px;font-size:10px">${inits(r.name)}</div>
-    <div class="li-m"><div class="li-t" style="font-size:12px">${r.name}</div><div class="li-s" style="font-size:11px">${r.territory||''} · ${r.target||20}/mo</div></div>
-    <button class="btn-icon" onclick="deleteRep('${r.fbKey||r.id}')" style="color:#A32D2D;width:28px;height:28px">
-      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-    </button>
+  reps.map(r=>`<div style="background:var(--bg3);border-radius:var(--r);padding:8px 10px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div class="av" style="width:28px;height:28px;font-size:10px;flex-shrink:0">${inits(r.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${r.name}</div>
+        <div style="font-size:11px;color:var(--text2)">@${r.username||'no username'} · ${r.territory||''}</div>
+      </div>
+      <button class="btn-icon" onclick="deleteRep('${r.fbKey||r.id}')" style="color:#A32D2D;width:26px;height:26px;padding:4px;flex-shrink:0">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" placeholder="New password" id="rpw-${r.fbKey||r.id}" style="flex:1;padding:6px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:12px;font-family:inherit;outline:none">
+      <button onclick="resetRepPassword('${r.fbKey||r.id}')" style="padding:6px 10px;border-radius:var(--r);background:var(--blue);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap">Reset</button>
+    </div>
   </div>`).join('');
+}
+
+async function resetRepPassword(key){
+  const inp=document.getElementById('rpw-'+key);
+  if(!inp)return;
+  const pw=inp.value.trim();
+  if(!pw){toast('Enter a new password first.');return;}
+  if(fbReady&&db)await fbUpdate('reps/'+key,{password:pw});
+  else{const r=reps.find(x=>(x.fbKey||x.id)===key);if(r)r.password=pw;}
+  inp.value='';
+  toast('Password updated!');
 }
 
 async function adminAddRep(){
   const name=document.getElementById('adm-r-name').value.trim();
+  const username=document.getElementById('adm-r-username').value.trim();
+  const password=document.getElementById('adm-r-password').value.trim();
   const territory=document.getElementById('adm-r-terr').value.trim();
   const target=parseInt(document.getElementById('adm-r-target').value)||20;
   const msg=document.getElementById('rep-add-msg');
   if(!name){msg.style.color='var(--text-danger)';msg.textContent='Name is required.';return;}
-  const rep={name,territory,target,createdAt:new Date().toISOString()};
+  if(!username){msg.style.color='var(--text-danger)';msg.textContent='Username is required.';return;}
+  if(!password){msg.style.color='var(--text-danger)';msg.textContent='Password is required.';return;}
+  // Check username is unique
+  if(reps.find(r=>r.username&&r.username.toLowerCase()===username.toLowerCase())){
+    msg.style.color='var(--text-danger)';msg.textContent='Username already exists. Choose another.';return;
+  }
+  const rep={name,username,password,territory,target,createdAt:new Date().toISOString()};
   if(fbReady&&db)await fbPush('reps',rep);
   else{reps.push({...rep,id:'r'+Date.now()});renderAdmRepsMini();populateRepSelects();}
   document.getElementById('adm-r-name').value='';
+  document.getElementById('adm-r-username').value='';
+  document.getElementById('adm-r-password').value='';
   document.getElementById('adm-r-terr').value='';
   document.getElementById('adm-r-target').value='';
-  msg.style.color='var(--text-success)';msg.textContent=`${name} added!`;
-  setTimeout(()=>{if(msg)msg.textContent='';},2500);
+  msg.style.color='var(--text-success)';msg.textContent=`${name} added! Username: ${username}`;
+  setTimeout(()=>{if(msg)msg.textContent='';},3000);
   toast(`${name} added!`);
 }
 
@@ -1085,11 +1142,20 @@ function populateProductDropdown(){
   const sel=document.getElementById('f-product-sel');if(!sel)return;
   const prev=sel.value;
   sel.innerHTML='<option value="">— Select product —</option>';
-  products.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name+(p.category?' ('+p.category+')':'');sel.appendChild(o);});
-  if(prev)sel.value=prev;
-  // also update the manual input visibility
+  products.forEach(p=>{
+    const o=document.createElement('option');
+    o.value=p.name;
+    o.textContent=p.name+(p.category?' ('+p.category+')':'');
+    sel.appendChild(o);
+  });
+  // Always add "Not in list" option
+  const other=document.createElement('option');
+  other.value='__other__';
+  other.textContent='Other (type manually)…';
+  sel.appendChild(other);
+  if(prev&&prev!=='__other__')sel.value=prev;
   const mi=document.getElementById('f-product-manual');
-  if(mi)mi.style.display=sel.value===''&&products.length?'':'none';
+  if(mi)mi.style.display=sel.value==='__other__'?'':'none';
 }
 
 async function saveCredentials(){
@@ -1244,10 +1310,10 @@ async function removeDest(key){
 //  REPS CRUD
 // ─────────────────────────────────────────────────────────────
 function populateRepSelects(){
-  ['gps-rep','f-rep','fil-rep','rep-sel'].forEach(id=>{
+  ['gps-rep','f-rep','fil-rep'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
-    const prev=el.value;const isFilter=(id==='fil-rep');const isLogin=(id==='rep-sel');
-    el.innerHTML=(isFilter?'<option value="">All reps</option>':isLogin?'<option value="">— Select your name —</option>':'');
+    const prev=el.value;const isFilter=(id==='fil-rep');
+    el.innerHTML=isFilter?'<option value="">All reps</option>':'';
     reps.forEach(r=>{const o=document.createElement('option');o.value=r.fbKey||r.id;o.textContent=r.name;el.appendChild(o);});
     if(prev)el.value=prev;
   });
@@ -1289,27 +1355,43 @@ async function deleteRep(key){
 function onProductSelChange(){
   const sel=document.getElementById('f-product-sel');
   const mi=document.getElementById('f-product-manual');
+  const sr=document.getElementById('f-product-save-row');
   if(!sel||!mi)return;
-  mi.style.display=sel.value===''?'':'none';
-  if(sel.value==='')mi.focus();
+  const isOther=sel.value==='__other__'||sel.value==='';
+  mi.style.display=isOther?'':'none';
+  if(sr)sr.style.display=isOther?'flex':'none';
+  if(isOther)setTimeout(()=>mi.focus(),50);
 }
 
 async function logActivity(){
   const repId=document.getElementById('f-rep').value;const date=document.getElementById('f-date').value;
   const type=document.getElementById('f-type').value;const doctor=document.getElementById('f-doctor').value.trim();
-  // get product from dropdown or manual input
   const sel=document.getElementById('f-product-sel');
   const manual=document.getElementById('f-product-manual');
-  const product=(sel&&sel.value?sel.value:(manual?manual.value:'')).trim();
+  const saveCb=document.getElementById('f-product-save-cb');
+  const selVal=sel?sel.value:'';
+  const product=(selVal===''||selVal==='__other__'?manual?.value:selVal||manual?.value||'').trim();
   const outcome=document.getElementById('f-outcome').value;
   const notes=document.getElementById('f-notes').value.trim();
   if(!repId||!date||!doctor||!product){toast('Fill in all required fields.');return;}
+  // Save to product list if checkbox ticked
+  if(saveCb&&saveCb.checked&&product){
+    const exists=products.find(p=>p.name.toLowerCase()===product.toLowerCase());
+    if(!exists){
+      const prod={name:product,category:'',createdAt:new Date().toISOString()};
+      if(fbReady&&db)fbPush('products',prod);
+      else{products.push({...prod,id:'p'+Date.now()});populateProductDropdown();}
+    }
+    saveCb.checked=false;
+  }
   const act={repId,date,type,doctor,product,outcome,notes,createdAt:new Date().toISOString()};
   if(fbReady&&db)await fbPush('activities',act);
   else{activities.push({...act,id:'a'+Date.now()});renderRepScreen();}
   document.getElementById('f-doctor').value='';
   if(sel)sel.value='';
   if(manual){manual.value='';manual.style.display='none';}
+  const sr=document.getElementById('f-product-save-row');
+  if(sr)sr.style.display='none';
   document.getElementById('f-notes').value='';
   toast('Activity saved!');
 }
@@ -1346,7 +1428,11 @@ function exportCSV(){
 //  SEED DEMO DATA (when Firebase not configured)
 // ─────────────────────────────────────────────────────────────
 function seedDemo(){
-  reps=[{id:'1',fbKey:'1',name:'Ana Santos',territory:'Cebu City',target:30},{id:'2',fbKey:'2',name:'Marco Reyes',territory:'Mandaue',target:25},{id:'3',fbKey:'3',name:'Liza Cruz',territory:'Lapu-Lapu',target:28}];
+  reps=[
+    {id:'1',fbKey:'1',name:'Ana Santos',username:'ana',password:'rep123',territory:'Cebu City',target:30},
+    {id:'2',fbKey:'2',name:'Marco Reyes',username:'marco',password:'rep123',territory:'Mandaue',target:25},
+    {id:'3',fbKey:'3',name:'Liza Cruz',username:'liza',password:'rep123',territory:'Lapu-Lapu',target:28}
+  ];
   activities=[
     {id:'a1',fbKey:'a1',repId:'1',date:'2026-07-10',type:'visit',doctor:'Dr. Tan',product:'Amoxil',outcome:'Prescription written',notes:''},
     {id:'a2',fbKey:'a2',repId:'2',date:'2026-07-11',type:'call',doctor:'Dr. Lim',product:'Losartan',outcome:'Interested',notes:'Follow up next week'},
@@ -1369,9 +1455,9 @@ async function init(){
   await loadBranding();
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('fil-month').value=new Date().toISOString().slice(0,7);
-  // init product dropdown with fallback "type manually" option
+  // init product dropdown
   const ps=document.getElementById('f-product-sel');
-  if(ps){ps.innerHTML='<option value="">— Select product —</option>';ps.appendChild(Object.assign(document.createElement('option'),{value:'',textContent:'Type manually…'}));}
+  if(ps){ps.innerHTML='<option value="">— Select product —</option><option value="__other__">Other (type manually)…</option>';}
   const pm=document.getElementById('f-product-manual');
   if(pm)pm.style.display='';
   initFirebase();
