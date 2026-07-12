@@ -253,6 +253,20 @@ body{display:flex;flex-direction:column}
 .prod-table td{padding:6px 6px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
 .prod-table tr:last-child td{border-bottom:none}
 .prod-table tr:hover td{background:var(--bg3)}
+.itin-days{display:flex;gap:5px;margin-bottom:0;flex-wrap:wrap}
+.itin-day-btn{flex:1;min-width:36px;padding:7px 4px;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s}
+.itin-day-btn:hover{border-color:var(--blue-m);color:var(--blue)}
+.itin-day-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.itin-day-btn.has-stops{border-color:var(--teal);color:var(--teal)}
+.itin-day-btn.active.has-stops{background:var(--teal);border-color:var(--teal);color:#fff}
+.itin-day-btn .day-count{font-size:9px;font-weight:500;opacity:.8}
+.itin-stop-item{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.itin-stop-item:last-child{border-bottom:none}
+.itin-stop-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.itin-stop-info{flex:1;min-width:0}
+.itin-stop-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.itin-stop-time{font-size:11px;color:var(--text2);margin-top:1px}
+.itin-stop-done{opacity:.5;text-decoration:line-through}
 </style>
 </head>
 <body>
@@ -424,11 +438,11 @@ body{display:flex;flex-direction:column}
         <div class="field"><label>Doctor / Contact</label><input type="text" id="f-doctor" placeholder="Dr. name or facility" autocomplete="off"></div>
         <div class="field"><label>Product pitched</label>
           <select id="f-product-sel" onchange="onProductSelChange()" style="margin-bottom:4px"></select>
-          <input type="text" id="f-product-manual" placeholder="Type product name" autocomplete="off" style="display:none;margin-bottom:4px">
-          <label id="f-product-save-row" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;padding:2px 0">
-            <input type="checkbox" id="f-product-save-cb" style="width:14px;height:14px;cursor:pointer">
-            Save this product to the list
-          </label>
+          <input type="text" id="f-product-manual" placeholder="Type product name" autocomplete="off" style="display:none;margin-bottom:6px">
+          <div id="f-product-save-row" style="display:none;align-items:center;gap:8px;padding:4px 0;cursor:pointer" onclick="document.getElementById('f-product-save-cb').click()">
+            <input type="checkbox" id="f-product-save-cb" style="width:16px;height:16px;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation()">
+            <span style="font-size:12px;color:var(--text2);user-select:none">Save this product to the list</span>
+          </div>
         </div>
         <div class="field"><label>Outcome</label>
           <select id="f-outcome">
@@ -466,9 +480,44 @@ body{display:flex;flex-direction:column}
         </div>
         <div class="filter-row">
           <input type="month" id="fil-month" onchange="renderHistory()">
-          <input type="text" id="fil-q" placeholder="Search…" oninput="renderHistory()">
+          <input type="text" id="fil-q" placeholder="Search..." oninput="renderHistory()">
         </div>
         <div id="hist-list"></div>
+      </div>
+    </div>
+
+    <!-- Itinerary -->
+    <div class="page" id="pg-itin">
+      <div class="card">
+        <div class="card-title">
+          Weekly itinerary
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn-icon" onclick="itinWeekShift(-1)" title="Prev week"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="itin-week-label" style="font-size:12px;color:var(--text2);white-space:nowrap;font-weight:500;min-width:120px;text-align:center"></span>
+            <button class="btn-icon" onclick="itinWeekShift(1)" title="Next week"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        </div>
+        <div class="itin-days" id="itin-days"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span id="itin-day-title">Monday</span>
+          <span id="itin-stop-count" style="font-size:12px;color:var(--text2);font-weight:400"></span>
+        </div>
+        <div style="width:100%;height:220px;border-radius:var(--rl);overflow:hidden;border:0.5px solid var(--border);margin-bottom:12px;background:var(--blue-l)">
+          <div id="itin-map" style="width:100%;height:100%"></div>
+        </div>
+        <div id="itin-stops-list"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+          <input type="text" id="itin-stop-input" placeholder="Add stop (doctor, clinic...)" autocomplete="off"
+            style="flex:1;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none"
+            onkeydown="if(event.key==='Enter')addItinStop()">
+          <input type="time" id="itin-stop-time" value="08:00"
+            style="width:90px;padding:10px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+          <button class="btn-icon" onclick="addItinStop()" title="Add stop" style="width:38px;height:38px;flex-shrink:0">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -483,8 +532,8 @@ body{display:flex;flex-direction:column}
     <button class="nav-item" onclick="repGo('log')" id="nav-log">
       <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log
     </button>
-    <button class="nav-item" onclick="repGo('reps')" id="nav-reps">
-      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>Reps
+    <button class="nav-item" onclick="repGo('itin')" id="nav-itin">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Plan
     </button>
     <button class="nav-item" onclick="repGo('hist')" id="nav-hist">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>History
@@ -578,7 +627,7 @@ const DEFAULT_CREDS={rep:{pin:'1234',pass:'rep123'},admin:{pin:'9999',pass:'admi
 
 let currentRole='rep', currentPIN='', authMode='pin';
 let loggedIn=false, loggedRole=null, loggedRepId=null, loggedRepName=null;
-let reps=[], activities=[], sessions=[], destinations=[], products=[], liveLocs={};
+let reps=[], activities=[], sessions=[], destinations=[], products=[], itineraries=[], liveLocs={};
 let activeSession=null, gpsWatchId=null, trailPts=[], liveRef=null;
 let timerInt=null, sessStart=null;
 let repMap=null, repMarker=null, repPolyline=null, destMarkers=[];
@@ -639,6 +688,10 @@ function attachListeners(){
     populateProductDropdown();
     const pt=document.getElementById('products-table');
     if(pt)renderProductsTable();
+  });
+  db.ref('itineraries').on('value',s=>{
+    itineraries=objArr(s.val());
+    if(document.getElementById('pg-itin')?.classList.contains('active'))renderItinDays();
   });
   // also load branding from Firebase
   db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
@@ -803,6 +856,7 @@ function repGo(tab){
   if(tab==='gps'){renderDestList();renderSessions();setTimeout(initRepMap,80);}
   if(tab==='reps')renderRepsList();
   if(tab==='hist'){populateRepSelects();renderHistory();}
+  if(tab==='itin'){initItinerary();}
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1460,6 +1514,190 @@ function seedDemo(){
 //  INIT
 // ─────────────────────────────────────────────────────────────
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ─────────────────────────────────────────────────────────────
+//  ITINERARY
+// ─────────────────────────────────────────────────────────────
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let itinWeekOffset=0; // 0=this week, 1=next week, etc.
+let itinSelectedDay=null; // date string YYYY-MM-DD
+let itinMap=null, itinMarkers=[], itinPolyline=null;
+
+function getWeekDates(offset=0){
+  const now=new Date();
+  const dow=now.getDay(); // 0=Sun
+  const monday=new Date(now);
+  monday.setDate(now.getDate()-dow+1+(offset*7)); // Monday of target week
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(monday);
+    d.setDate(monday.getDate()+i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
+function fmtWeekLabel(dates){
+  const s=new Date(dates[0]),e=new Date(dates[6]);
+  return s.toLocaleDateString('en-PH',{month:'short',day:'numeric'})+' – '+e.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function getStopsForDay(dateStr){
+  return itineraries.filter(x=>x.date===dateStr&&(x.repId===loggedRepId||x.repId===(reps.find(r=>r.fbKey===loggedRepId||r.id===loggedRepId)?.fbKey))).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+}
+
+function initItinerary(){
+  const dates=getWeekDates(itinWeekOffset);
+  // Default to today or Monday
+  const todayStr=new Date().toISOString().slice(0,10);
+  itinSelectedDay=dates.includes(todayStr)?todayStr:dates[0];
+  renderItinDays();
+  renderItinStops();
+  setTimeout(initItinMap,80);
+}
+
+function itinWeekShift(dir){
+  itinWeekOffset+=dir;
+  const dates=getWeekDates(itinWeekOffset);
+  itinSelectedDay=dates[0];
+  renderItinDays();
+  renderItinStops();
+}
+
+function renderItinDays(){
+  const dates=getWeekDates(itinWeekOffset);
+  document.getElementById('itin-week-label').textContent=fmtWeekLabel(dates);
+  const el=document.getElementById('itin-days');
+  if(!el)return;
+  el.innerHTML=dates.map(dateStr=>{
+    const d=new Date(dateStr+'T00:00:00');
+    const stops=getStopsForDay(dateStr);
+    const isActive=dateStr===itinSelectedDay;
+    const hasStops=stops.length>0;
+    return`<button class="itin-day-btn${isActive?' active':''}${hasStops&&!isActive?' has-stops':''}" onclick="selectItinDay('${dateStr}')">
+      <span>${DAY_NAMES[d.getDay()]}</span>
+      <span>${d.getDate()}</span>
+      ${hasStops?`<span class="day-count">${stops.length}✓</span>`:''}
+    </button>`;
+  }).join('');
+}
+
+function selectItinDay(dateStr){
+  itinSelectedDay=dateStr;
+  renderItinDays();
+  renderItinStops();
+  renderItinMap();
+}
+
+function renderItinStops(){
+  if(!itinSelectedDay)return;
+  const d=new Date(itinSelectedDay+'T00:00:00');
+  document.getElementById('itin-day-title').textContent=DAY_FULL[d.getDay()]+', '+d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+  const stops=getStopsForDay(itinSelectedDay);
+  document.getElementById('itin-stop-count').textContent=stops.length?`${stops.length} stop${stops.length>1?'s':''}`:' ';
+  const el=document.getElementById('itin-stops-list');
+  if(!stops.length){el.innerHTML='<div class="empty" style="padding:10px 0">No stops planned. Add one below.</div>';return;}
+  el.innerHTML=stops.map((s,i)=>`
+    <div class="itin-stop-item${s.done?' itin-stop-done':''}">
+      <div class="itin-stop-num" style="background:${s.done?'var(--teal)':'var(--blue)'}">${s.done?'✓':i+1}</div>
+      <div class="itin-stop-info">
+        <div class="itin-stop-name">${s.name}</div>
+        ${s.time?`<div class="itin-stop-time">${s.time}</div>`:''}
+      </div>
+      <button class="btn-icon" onclick="toggleItinStop('${s.fbKey||s.id}')" title="${s.done?'Mark pending':'Mark done'}" style="width:28px;height:28px;color:${s.done?'var(--teal)':'var(--text2)'}">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+      <button class="btn-icon" onclick="removeItinStop('${s.fbKey||s.id}')" title="Remove" style="width:28px;height:28px;color:#A32D2D">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+async function addItinStop(){
+  const nameEl=document.getElementById('itin-stop-input');
+  const timeEl=document.getElementById('itin-stop-time');
+  const name=nameEl.value.trim();
+  if(!name){toast('Enter a stop name.');return;}
+  if(!itinSelectedDay){toast('Select a day first.');return;}
+  const stop={name,time:timeEl.value||'',date:itinSelectedDay,repId:loggedRepId,done:false,lat:null,lng:null,createdAt:new Date().toISOString()};
+  if(fbReady&&db){
+    const ref=await fbPush('itineraries',stop);
+    // Try geocode in background
+    geocodeDest(name,coords=>{if(coords)fbUpdate('itineraries/'+ref.key,{lat:coords.lat,lng:coords.lng});});
+  }else{
+    stop.id='it'+Date.now();
+    itineraries.push(stop);
+    geocodeDest(name,coords=>{if(coords){stop.lat=coords.lat;stop.lng=coords.lng;}renderItinStops();renderItinMap();});
+    renderItinStops();
+  }
+  nameEl.value='';
+  renderItinDays();
+}
+
+async function toggleItinStop(key){
+  const s=itineraries.find(x=>x.fbKey===key||x.id===key);if(!s)return;
+  const newDone=!s.done;
+  if(fbReady&&db)await fbUpdate('itineraries/'+key,{done:newDone});
+  else{s.done=newDone;renderItinStops();renderItinDays();}
+}
+
+async function removeItinStop(key){
+  if(fbReady&&db)await fbRemove('itineraries/'+key);
+  else{itineraries=itineraries.filter(x=>x.fbKey!==key&&x.id!==key);renderItinStops();renderItinDays();renderItinMap();}
+}
+
+// ── Itinerary Map ──────────────────────────────────────
+function initItinMap(){
+  const el=document.getElementById('itin-map');if(!el||itinMap)return;
+  if(!window.google){
+    loadGoogleMaps(()=>createItinMap());
+  }else{createItinMap();}
+}
+function createItinMap(){
+  const el=document.getElementById('itin-map');if(!el)return;
+  itinMap=new google.maps.Map(el,{
+    center:{lat:10.35,lng:123.95},zoom:12,
+    mapTypeControl:false,streetViewControl:false,fullscreenControl:false,
+    zoomControlOptions:{position:google.maps.ControlPosition.RIGHT_BOTTOM}
+  });
+  renderItinMap();
+}
+function renderItinMap(){
+  if(!itinMap||!window.google)return;
+  itinMarkers.forEach(m=>m.setMap(null));itinMarkers=[];
+  if(itinPolyline){itinPolyline.setMap(null);itinPolyline=null;}
+  const stops=getStopsForDay(itinSelectedDay).filter(s=>s.lat&&s.lng);
+  if(!stops.length){
+    if(!window.google)return;
+    const el=document.getElementById('itin-map');
+    if(el&&!el.innerHTML.includes('Waiting'))el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:#0C447C">Add stops to see them on the map</div>';
+    return;
+  }
+  const bounds=new google.maps.LatLngBounds();
+  stops.forEach((s,i)=>{
+    const pos={lat:s.lat,lng:s.lng};
+    const m=new google.maps.Marker({
+      position:pos,map:itinMap,
+      label:{text:String(i+1),color:'#fff',fontSize:'11px',fontWeight:'bold'},
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:14,fillColor:s.done?'#1D9E75':'#185FA5',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
+      title:s.name,zIndex:10
+    });
+    const iw=new google.maps.InfoWindow({content:`<div style="font-family:-apple-system,sans-serif;padding:2px"><b>${s.name}</b>${s.time?'<br><span style="color:#5F5E5A;font-size:11px">'+s.time+'</span>':''}</div>`});
+    m.addListener('click',()=>iw.open(itinMap,m));
+    itinMarkers.push(m);
+    bounds.extend(pos);
+  });
+  if(stops.length>1){
+    itinPolyline=new google.maps.Polyline({
+      path:stops.map(s=>({lat:s.lat,lng:s.lng})),
+      geodesic:true,strokeColor:'#378ADD',strokeWeight:2.5,strokeOpacity:.7,
+      icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:3,fillColor:'#378ADD',fillOpacity:1},repeat:'80px'}],
+      map:itinMap
+    });
+  }
+  stops.length>1?itinMap.fitBounds(bounds,40):itinMap.panTo({lat:stops[0].lat,lng:stops[0].lng});
+}
 
 async function init(){
   await loadBranding();
