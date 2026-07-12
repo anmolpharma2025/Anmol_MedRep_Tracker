@@ -195,39 +195,41 @@ body{display:flex;flex-direction:column}
 ══════════════════════════════════════════════════════ */
 #screen-admin{background:var(--bg)}
 .admin-layout{flex:1;display:flex;flex-direction:column;overflow:hidden}
-@media(min-width:700px){.admin-layout{flex-direction:row}}
+@media(min-width:600px){.admin-layout{flex-direction:row}}
 .admin-map-side{flex:1;position:relative;min-height:240px}
 #admin-map{width:100%;height:100%;min-height:240px}
 .map-ctrls{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:5px;z-index:10}
 .mcbtn{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r);padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12);font-family:inherit}
 .mcbtn:hover{background:var(--bg2)}.mcbtn.on{background:var(--blue-l);color:var(--blue-d);border-color:var(--blue)}
-.admin-side{width:100%;background:var(--bg);border-top:0.5px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:50vh}
-@media(min-width:700px){.admin-side{width:280px;border-top:none;border-left:0.5px solid var(--border);max-height:none}}
-.admin-inner{padding:14px}
+.admin-side{width:100%;background:var(--bg);border-top:0.5px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:55vh}
+@media(min-width:600px){.admin-side{width:340px;border-top:none;border-left:0.5px solid var(--border);max-height:none}}
+@media(min-width:900px){.admin-side{width:400px}}
+@media(min-width:1200px){.admin-side{width:460px}}
+.admin-inner{padding:16px}
 .mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.am{background:var(--bg2);border-radius:var(--r);padding:10px 12px}
-.am-l{font-size:10px;color:var(--text2);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
-.am-v{font-size:20px;font-weight:700;color:var(--text)}
+.am{background:var(--bg2);border-radius:var(--r);padding:11px 14px}
+.am-l{font-size:11px;color:var(--text2);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.am-v{font-size:22px;font-weight:700;color:var(--text)}
 .atabs{display:flex;gap:3px;background:var(--bg2);border-radius:var(--r);padding:3px;border:0.5px solid var(--border);margin-bottom:12px}
-.atab{flex:1;font-size:11px;padding:5px 4px;border-radius:6px;cursor:pointer;color:var(--text2);border:none;background:transparent;font-weight:700;font-family:inherit}
+.atab{flex:1;font-size:12px;padding:6px 4px;border-radius:6px;cursor:pointer;color:var(--text2);border:none;background:transparent;font-weight:700;font-family:inherit}
 .atab.on{background:var(--bg);color:var(--text);border:0.5px solid var(--border)}
 .apanel{display:none}.apanel.on{display:block}
 .ptitle{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.rcard{border:0.5px solid var(--border);border-radius:var(--rl);padding:10px 12px;margin-bottom:8px;cursor:pointer}
-.rcard.is-on{border-left:3px solid var(--teal)}.rcard.is-off{border-left:3px solid var(--gray)}
+.rcard{border:0.5px solid var(--border);border-radius:var(--rl);padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.rcard:hover{border-color:var(--blue-m)}.rcard.is-on{border-left:3px solid var(--teal)}.rcard.is-off{border-left:3px solid var(--gray)}
 .rcard-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.rname{font-size:13px;font-weight:700;color:var(--text)}
-.rdet{font-size:11px;color:var(--text2);line-height:1.5}
-.rcoords{font-size:10px;color:var(--text3);font-family:monospace;margin-top:1px}
-.rstale{font-size:10px;color:var(--teal);font-weight:700}
-.fi{padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.rname{font-size:14px;font-weight:700;color:var(--text)}
+.rdet{font-size:12px;color:var(--text2);line-height:1.5}
+.rcoords{font-size:11px;color:var(--text3);font-family:monospace;margin-top:1px}
+.rstale{font-size:11px;color:var(--teal);font-weight:700}
+.fi{padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px}
 .fi:last-child{border-bottom:none}
-.fi-t{font-weight:700;color:var(--text)}.fi-s{color:var(--text2);font-size:11px;margin-top:1px}
-.stbl{width:100%;border-collapse:collapse;font-size:11px}
-.stbl th{text-align:left;padding:4px 5px;color:var(--text3);border-bottom:0.5px solid var(--border);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.stbl td{padding:5px 5px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+.fi-t{font-weight:600;color:var(--text)}.fi-s{color:var(--text2);font-size:12px;margin-top:1px}
+.stbl{width:100%;border-collapse:collapse;font-size:12px}
+.stbl th{text-align:left;padding:5px 6px;color:var(--text3);border-bottom:0.5px solid var(--border);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.stbl td{padding:7px 6px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
 .stbl tr:last-child td{border-bottom:none}
-.upd{font-size:10px;color:var(--text3);text-align:center;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)}
+.upd{font-size:11px;color:var(--text3);text-align:center;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)}
 
 /* Toast */
 .toast{position:fixed;bottom:calc(72px + var(--sb));left:50%;transform:translateX(-50%) translateY(12px);background:#1a1a18;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:all .2s;pointer-events:none;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center}
@@ -369,7 +371,6 @@ body{display:flex;flex-direction:column}
     </div>
     <div class="topbar-right">
       <span class="tb-badge"><span class="fb-dot" id="rep-fb-dot"></span><span id="rep-fb-st">…</span></span>
-      <button class="tb-btn" onclick="switchToAdmin()">Admin</button>
       <button class="tb-btn" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -503,7 +504,6 @@ body{display:flex;flex-direction:column}
     <div class="topbar-right">
       <span class="tb-badge" id="online-count">0 online</span>
       <span class="tb-badge"><span class="fb-dot" id="adm-fb-dot"></span><span id="adm-fb-st">…</span></span>
-      <button class="tb-btn" onclick="switchToRep()">Rep View</button>
       <button class="tb-btn" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -767,8 +767,8 @@ function showRep(){
   renderRepScreen();
 }
 function showAdmin(){showScreen('screen-admin');renderAdminAll();setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);}
-function switchToAdmin(){if(loggedRole==='admin'||true)showAdmin();}// allow toggle
-function switchToRep(){showRep();}
+function switchToAdmin(){if(loggedRole==='admin')showAdmin();}
+function switchToRep(){if(loggedRole==='rep'||loggedRole==='admin')showRep();}
 function logout(){
   loggedIn=false;loggedRole=null;loggedRepId=null;loggedRepName=null;
   currentPIN='';updPinDots();
@@ -1379,8 +1379,18 @@ async function logActivity(){
     const exists=products.find(p=>p.name.toLowerCase()===product.toLowerCase());
     if(!exists){
       const prod={name:product,category:'',createdAt:new Date().toISOString()};
-      if(fbReady&&db)fbPush('products',prod);
-      else{products.push({...prod,id:'p'+Date.now()});populateProductDropdown();}
+      if(fbReady&&db){
+        const ref=await fbPush('products',prod);
+        // also add locally so dropdown updates immediately without waiting for Firebase listener
+        products.push({...prod,fbKey:ref.key});
+        populateProductDropdown();
+      }else{
+        products.push({...prod,id:'p'+Date.now()});
+        populateProductDropdown();
+      }
+      toast('"'+product+'" added to product list!',3000);
+    }else{
+      toast('"'+product+'" is already in the list.',2000);
     }
     saveCb.checked=false;
   }
