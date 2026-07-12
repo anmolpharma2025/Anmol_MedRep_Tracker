@@ -174,6 +174,22 @@ body{display:flex;flex-direction:column}
 .filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .filter-row select,.filter-row input{flex:1;min-width:100px;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;-webkit-appearance:none;font-family:inherit}
 .gmap-wrap{width:100%;height:290px;border-radius:var(--rl);overflow:hidden;border:0.5px solid var(--border);margin-bottom:12px;background:var(--blue-l)}
+.rep-gps-layout{display:flex;flex-direction:column;height:calc(100vh - 116px);overflow:hidden}
+@media(min-width:600px){.rep-gps-layout{flex-direction:row}}
+.rep-gps-map-side{flex:1;position:relative;min-height:260px}
+.rep-gps-top-bar{position:absolute;top:10px;left:10px;right:10px;background:rgba(255,255,255,0.94);border-radius:var(--r);padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.12);border:0.5px solid var(--border)}
+@media(prefers-color-scheme:dark){.rep-gps-top-bar{background:rgba(44,44,46,0.96)}}
+.rep-gps-btn-bar{position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:8px;z-index:10}
+.rep-gps-btn-bar .btn{box-shadow:0 2px 8px rgba(0,0,0,.25);flex:1;padding:11px}
+.rep-gps-side{background:var(--bg);border-top:0.5px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:44vh}
+@media(min-width:600px){.rep-gps-side{width:300px;border-top:none;border-left:0.5px solid var(--border);max-height:none}}
+@media(min-width:900px){.rep-gps-side{width:340px}}
+.rep-gps-side-inner{padding:14px}
+.gps-stop-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text2)}
+.gps-stop-item:last-child{border-bottom:none}
+.gps-stop-num{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.gps-stop-name{flex:1;font-size:13px;color:var(--text);font-weight:500}
+.gps-stop-done .gps-stop-name{opacity:.5;text-decoration:line-through}
 #rep-map{width:100%;height:100%}
 .sess-ctl{display:flex;gap:8px;margin-bottom:12px}
 .sess-ctl .btn{flex:1;padding:12px}
@@ -414,29 +430,48 @@ body{display:flex;flex-direction:column}
       <div class="card"><div class="card-title">Recent activities</div><div id="r-recent"></div></div>
     </div>
     <!-- GPS -->
-    <div class="page" id="pg-gps">
-      <div class="card">
-        <div class="card-title">
-          <span><span class="gpulse" id="gpulse"></span>Live GPS</span>
-          <span id="gps-timer" style="font-size:12px;color:var(--text2);font-weight:400;font-family:monospace"></span>
+    <div class="page" id="pg-gps" style="padding:0">
+      <div class="rep-gps-layout">
+        <!-- Hidden rep selector auto-set to logged rep -->
+        <select id="gps-rep" style="display:none"></select>
+        <!-- Map side -->
+        <div class="rep-gps-map-side">
+          <div id="rep-map" style="width:100%;height:100%"></div>
+          <!-- Session controls overlay -->
+          <div class="rep-gps-top-bar">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+              <span class="gpulse" id="gpulse"></span>
+              <span id="gps-info-short" style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">Ready to track</span>
+              <span id="gps-timer" style="font-size:12px;color:var(--blue-d);font-weight:700;font-family:monospace;flex-shrink:0"></span>
+            </div>
+          </div>
+          <div class="rep-gps-btn-bar">
+            <button class="btn btn-green" id="btn-login-gps" onclick="startSession()" style="flex:1;padding:10px">▶ Log In</button>
+            <button class="btn btn-red" id="btn-logout-gps" onclick="endSession()" style="flex:1;padding:10px;display:none">■ Log Out</button>
+          </div>
         </div>
-        <div class="field"><label>Rep</label><select id="gps-rep"></select></div>
-        <div class="sess-ctl">
-          <button class="btn btn-green" id="btn-login-gps" onclick="startSession()">▶ Log In</button>
-          <button class="btn btn-red" id="btn-logout-gps" onclick="endSession()" style="display:none">■ Log Out</button>
+        <!-- Side panel -->
+        <div class="rep-gps-side">
+          <div class="rep-gps-side-inner">
+            <!-- Today's itinerary stops -->
+            <div class="ptitle" style="margin-bottom:8px">Today's route</div>
+            <div id="gps-itin-stops" style="margin-bottom:12px"></div>
+            <!-- Destinations -->
+            <div class="ptitle">Ad-hoc destinations</div>
+            <div class="dest-list" id="dest-list" style="margin-top:6px"></div>
+            <div class="dest-add" style="margin-top:6px">
+              <input type="text" id="dest-in" placeholder="Add destination…" autocomplete="off" onkeydown="if(event.key==='Enter')addDest()"
+                style="flex:1;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+              <button class="btn-icon" onclick="addDest()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+            <!-- GPS info detail -->
+            <div class="gps-info" id="gps-info" style="margin-top:10px;font-size:11px">Select a rep and tap Log In.</div>
+            <!-- Sessions -->
+            <div class="ptitle" style="margin-top:12px;margin-bottom:6px">Sessions</div>
+            <div id="r-sessions"></div>
+          </div>
         </div>
-        <div class="gps-info" id="gps-info">Select a rep and tap Log In to begin tracking.</div>
-        <div class="gmap-wrap"><div id="rep-map"></div></div>
       </div>
-      <div class="card">
-        <div class="card-title">Destinations today <span id="dest-count" style="font-size:12px;color:var(--text2);font-weight:400"></span></div>
-        <div class="dest-list" id="dest-list"></div>
-        <div class="dest-add">
-          <input type="text" id="dest-in" placeholder="Add clinic, hospital, doctor…" autocomplete="off" onkeydown="if(event.key==='Enter')addDest()">
-          <button class="btn-icon" onclick="addDest()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-        </div>
-      </div>
-      <div class="card"><div class="card-title">Sessions</div><div id="r-sessions"></div></div>
     </div>
     <!-- Log -->
     <div class="page" id="pg-log">
@@ -491,7 +526,7 @@ body{display:flex;flex-direction:column}
         <div class="card-title">History
           <button class="btn-icon" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M12 2v13m-5-5l5 5 5-5M2 17v2a2 2 0 002 2h16a2 2 0 002-2v-2"/></svg></button>
         </div>
-        <div class="filter-row">
+        <div class="filter-row" id="fil-rep-row">
           <select id="fil-rep" onchange="renderHistory()"><option value="">All reps</option></select>
           <select id="fil-type" onchange="renderHistory()">
             <option value="">All types</option><option value="visit">Visit</option>
@@ -712,6 +747,7 @@ function attachListeners(){
   db.ref('itineraries').on('value',s=>{
     itineraries=objArr(s.val());
     if(document.getElementById('pg-itin')?.classList.contains('active'))renderItinDays();
+    if(document.getElementById('pg-gps')?.classList.contains('active'))renderGpsItinStops();
   });
   // also load branding from Firebase
   db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
@@ -872,8 +908,12 @@ function repNav(id){document.querySelectorAll('.nav-item').forEach(n=>n.classLis
 function repGo(tab){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('pg-'+tab).classList.add('active');
-  repNav(tab==='dash'?'dash':tab==='gps'?'gps':tab==='log'?'log':tab==='reps'?'reps':'hist');
-  if(tab==='gps'){renderDestList();renderSessions();setTimeout(initRepMap,80);}
+  repNav(tab==='dash'?'dash':tab==='gps'?'gps':tab==='log'?'log':tab==='itin'?'itin':'hist');
+  if(tab==='gps'){
+    populateRepSelects();
+    if(loggedRepId){const s=document.getElementById('gps-rep');if(s)s.value=loggedRepId;}
+    renderGpsItinStops();renderDestList();renderSessions();setTimeout(initRepMap,80);
+  }
   if(tab==='reps')renderRepsList();
   if(tab==='hist'){populateRepSelects();renderHistory();}
   if(tab==='itin'){initItinerary();}
@@ -883,18 +923,41 @@ function repGo(tab){
 //  REP DASHBOARD
 // ─────────────────────────────────────────────────────────────
 function renderRepScreen(){renderMetrics();renderRepPerf();renderRecent();}
+function myActs(){
+  // Reps see only their own; admin sees all
+  if(loggedRole==='admin')return activities;
+  return activities.filter(a=>a.repId===loggedRepId);
+}
 function renderMetrics(){
-  const total=activities.length,month=activities.filter(a=>isThisMonth(a.date)).length;
-  const rx=activities.filter(a=>a.outcome==='Prescription written').length;
-  const online=sessions.filter(s=>!s.logoutTime).length;
+  const mine=myActs();
+  const total=mine.length;
+  const month=mine.filter(a=>isThisMonth(a.date)).length;
+  const rx=mine.filter(a=>a.outcome==='Prescription written').length;
+  const visits=mine.filter(a=>isThisMonth(a.date)&&a.type==='visit').length;
   document.getElementById('r-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">Total activities</div><div class="metric-val">${total}</div></div>
+    <div class="metric"><div class="metric-label">My activities</div><div class="metric-val">${total}</div></div>
     <div class="metric"><div class="metric-label">This month</div><div class="metric-val">${month}</div></div>
     <div class="metric"><div class="metric-label">Prescriptions</div><div class="metric-val">${rx}</div></div>
-    <div class="metric"><div class="metric-label">Reps online</div><div class="metric-val" style="color:var(--teal)">${online}</div></div>`;
+    <div class="metric"><div class="metric-label">Visits this month</div><div class="metric-val">${visits}</div></div>`;
 }
 function renderRepPerf(){
   const el=document.getElementById('r-perf');
+  if(loggedRole==='rep'){
+    // Show own progress card
+    const rep=reps.find(r=>r.fbKey===loggedRepId||r.id===loggedRepId);
+    if(!rep){el.innerHTML='<div class="empty">No data.</div>';return;}
+    const v=activities.filter(a=>(a.repId===rep.fbKey||a.repId===rep.id)&&isThisMonth(a.date)&&a.type==='visit').length;
+    const pct=Math.min(100,Math.round(v/(rep.target||20)*100));
+    const col=pct>=100?'#1D9E75':pct>=60?'#185FA5':'#E24B4A';
+    const on=sessions.find(s=>(s.repId===rep.fbKey||s.repId===rep.id)&&!s.logoutTime);
+    el.innerHTML=`<div class="li"><div class="av">${inits(rep.name)}</div>
+      <div class="li-m"><div class="li-t">${rep.name}${on?' <span class="badge b-on">Online</span>':''}</div>
+      <div class="li-s">${rep.territory||''} · Target: ${rep.target||20} visits/mo</div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${col}"></div></div></div>
+      <div class="li-r" style="text-align:right"><div style="font-size:18px;font-weight:700;color:${col}">${pct}%</div><div style="font-size:11px;color:var(--text2)">${v}/${rep.target||20}</div></div></div>`;
+    return;
+  }
+  // Admin sees all reps
   if(!reps.length){el.innerHTML='<div class="empty">No reps yet.</div>';return;}
   el.innerHTML=reps.map(r=>{
     const v=activities.filter(a=>(a.repId===r.fbKey||a.repId===String(r.id))&&isThisMonth(a.date)&&a.type==='visit').length;
@@ -910,10 +973,11 @@ function renderRepPerf(){
 }
 function renderRecent(){
   const el=document.getElementById('r-recent');
-  const s=[...activities].sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'')).slice(0,8);
+  const mine=myActs();
+  const s=[...mine].sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'')).slice(0,8);
   el.innerHTML=s.length?s.map(a=>`<div class="li"><div class="li-m">
     <div class="li-t">${a.doctor} — ${a.product}</div>
-    <div class="li-s">${repName(a.repId)} · ${fDate(a.date)}</div>
+    <div class="li-s">${loggedRole==='admin'?repName(a.repId)+' · ':''}${fDate(a.date)}</div>
   </div>${tBadge(a.type)}</div>`).join(''):'<div class="empty">No activities yet.</div>';
 }
 
@@ -1367,7 +1431,11 @@ function startGPS(){
     trailPts.push(pt);
     if(liveRef)await liveRef.set({lat:pt.lat,lng:pt.lng,acc:pt.acc,t:pt.t,repId:activeSession.repId,name:repName(activeSession.repId)});
     if(fbReady&&db&&activeSession.fbKey&&trailPts.length%10===0)fbUpdate('sessions/'+activeSession.fbKey,{trailCount:trailPts.length,lastLat:pt.lat,lastLng:pt.lng});
-    document.getElementById('gps-info').textContent=`${repName(activeSession?.repId)} · ${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} ±${pt.acc}m · ${trailPts.length} pts`;
+    const infoEl=document.getElementById('gps-info');
+    const shortEl=document.getElementById('gps-info-short');
+    const txt=`${repName(activeSession?.repId)} · ${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} ±${pt.acc}m · ${trailPts.length} pts`;
+    if(infoEl)infoEl.textContent=txt;
+    if(shortEl)shortEl.textContent=`${pt.lat.toFixed(4)}, ${pt.lng.toFixed(4)} ±${pt.acc}m`;
     updateRepTrail();
   },err=>{
     const m={1:'Location permission denied.',2:'Position unavailable.',3:'GPS timed out.'};
@@ -1383,6 +1451,25 @@ function startTimer(){
     const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
     document.getElementById('gps-timer').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   },1000);
+}
+function renderGpsItinStops(){
+  const el=document.getElementById('gps-itin-stops');if(!el)return;
+  const todayStr=new Date().toISOString().slice(0,10);
+  const repId=loggedRepId;
+  const stops=itineraries.filter(x=>x.date===todayStr&&(x.repId===repId)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  if(!stops.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0 8px">No itinerary set for today. <span style="color:var(--blue);cursor:pointer;text-decoration:underline" onclick="repGo(\'itin\')">Add stops →</span></div>';
+    return;
+  }
+  el.innerHTML=stops.map((s,i)=>`
+    <div class="gps-stop-item${s.done?' gps-stop-done':''}">
+      <div class="gps-stop-num" style="background:${s.done?'var(--teal)':'var(--blue)'}">${s.done?'✓':i+1}</div>
+      <div class="gps-stop-name">${s.name}</div>
+      ${s.time?`<div style="font-size:11px;color:var(--text3)">${s.time}</div>`:''}
+      <button class="btn-icon" onclick="toggleItinStop('${s.fbKey||s.id}')" style="width:26px;height:26px;color:${s.done?'var(--teal)':'var(--text3)'}">
+        <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </div>`).join('');
 }
 function renderSessions(){
   const el=document.getElementById('r-sessions');
@@ -1565,16 +1652,23 @@ async function deleteAct(key){
   else{activities=activities.filter(a=>a.id!==key);renderHistory();renderMetrics();}
 }
 function renderHistory(){
-  const fr=document.getElementById('fil-rep').value;const ft=document.getElementById('fil-type').value;
-  const fm=document.getElementById('fil-month').value;const fq=(document.getElementById('fil-q').value||'').toLowerCase();
+  const ft=document.getElementById('fil-type').value;
+  const fm=document.getElementById('fil-month').value;
+  const fq=(document.getElementById('fil-q').value||'').toLowerCase();
+  // Rep filter only visible to admin
+  const frEl=document.getElementById('fil-rep');
+  const frRow=document.getElementById('fil-rep-row');
+  if(frRow)frRow.style.display=loggedRole==='admin'?'':'none';
+  const fr=loggedRole==='rep'?loggedRepId:(frEl?frEl.value:'');
   let data=[...activities];
-  if(fr)data=data.filter(a=>a.repId===fr);if(ft)data=data.filter(a=>a.type===ft);
+  if(fr)data=data.filter(a=>a.repId===fr);
+  if(ft)data=data.filter(a=>a.type===ft);
   if(fm)data=data.filter(a=>a.date&&a.date.startsWith(fm));
   if(fq)data=data.filter(a=>(a.doctor+a.product+(a.notes||'')+repName(a.repId)).toLowerCase().includes(fq));
   data.sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
   document.getElementById('hist-list').innerHTML=data.length?data.map(a=>`<div class="li"><div class="li-m">
     <div class="li-t">${a.doctor} — ${a.product}</div>
-    <div class="li-s">${repName(a.repId)} · ${fDate(a.date)} · ${a.outcome}</div>
+    <div class="li-s">${loggedRole==='admin'?repName(a.repId)+' · ':''}${fDate(a.date)} · ${a.outcome}</div>
   </div><div style="display:flex;align-items:center;gap:6px">${tBadge(a.type)}
     <button class="btn-icon" onclick="deleteAct('${a.fbKey||a.id}')" style="color:#A32D2D">
       <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
