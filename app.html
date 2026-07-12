@@ -243,6 +243,14 @@ body{display:flex;flex-direction:column}
 .creds-save-btn:active{opacity:.8}
 .creds-msg{font-size:12px;text-align:center;min-height:16px;margin-top:6px}
 .creds-note{background:var(--bg2);border-radius:var(--r);padding:8px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:10px}
+.settings-block{background:var(--bg2);border-radius:var(--r);padding:12px 14px}
+.settings-block-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.settings-block-title i{font-size:14px;color:var(--text2)}
+.prod-table{width:100%;border-collapse:collapse;font-size:12px}
+.prod-table th{text-align:left;padding:5px 6px;font-size:10px;color:var(--text3);border-bottom:0.5px solid var(--border);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.prod-table td{padding:6px 6px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+.prod-table tr:last-child td{border-bottom:none}
+.prod-table tr:hover td{background:var(--bg3)}
 </style>
 </head>
 <body>
@@ -407,7 +415,10 @@ body{display:flex;flex-direction:column}
           </div>
         </div>
         <div class="field"><label>Doctor / Contact</label><input type="text" id="f-doctor" placeholder="Dr. name or facility" autocomplete="off"></div>
-        <div class="field"><label>Product pitched</label><input type="text" id="f-product" placeholder="Product name" autocomplete="off"></div>
+        <div class="field"><label>Product pitched</label>
+          <select id="f-product-sel" onchange="onProductSelChange()" style="margin-bottom:4px"></select>
+          <input type="text" id="f-product-manual" placeholder="Or type product name" autocomplete="off" style="display:none">
+        </div>
         <div class="field"><label>Outcome</label>
           <select id="f-outcome">
             <option>Interested</option><option>Follow-up needed</option>
@@ -420,7 +431,7 @@ body{display:flex;flex-direction:column}
     </div>
     <!-- Reps -->
     <div class="page" id="pg-reps">
-      <div class="card">
+      <div class="card" id="add-rep-card" style="display:none">
         <div class="card-title">Add rep</div>
         <div class="field"><label>Full name</label><input type="text" id="r-name" placeholder="Rep name"></div>
         <div class="field"><label>Territory</label><input type="text" id="r-terr" placeholder="City / region"></div>
@@ -509,8 +520,29 @@ body{display:flex;flex-direction:column}
         <div class="apanel" id="ap-feed"><div class="ptitle">Recent activities</div><div id="adm-feed"></div></div>
         <div class="apanel" id="ap-sess"><div class="ptitle">Today's sessions</div><div id="adm-sess"></div></div>
         <div class="apanel" id="ap-creds">
-          <div class="ptitle">Login credentials</div>
-          <div id="creds-panel"></div>
+          <div class="ptitle">Settings</div>
+
+          <div class="settings-block">
+            <div class="settings-block-title"><i class="ti ti-users" aria-hidden="true"></i> Add med rep</div>
+            <div class="creds-row"><label>Full name</label><input type="text" id="adm-r-name" placeholder="Rep name"></div>
+            <div class="creds-row"><label>Territory</label><input type="text" id="adm-r-terr" placeholder="City / region"></div>
+            <div class="creds-row"><label>Target</label><input type="number" id="adm-r-target" placeholder="e.g. 30" min="1"></div>
+            <button class="creds-save-btn" onclick="adminAddRep()">Add Rep</button>
+            <div class="creds-msg" id="rep-add-msg"></div>
+            <div style="margin-top:10px" id="adm-reps-mini"></div>
+          </div>
+
+          <div class="settings-block" style="margin-top:14px">
+            <div class="settings-block-title"><i class="ti ti-pill" aria-hidden="true"></i> Product list</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input type="text" id="prod-name" placeholder="Product name" style="flex:1;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+              <input type="text" id="prod-cat" placeholder="Category" style="width:100px;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+              <button class="btn-icon" onclick="addProduct()" title="Add product" style="flex-shrink:0"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+            <div id="products-table"></div>
+          </div>
+
+          <div class="settings-block" style="margin-top:14px" id="creds-panel"></div>
         </div>
         <div class="upd" id="upd-time"></div>
       </div>
@@ -534,7 +566,7 @@ const DEFAULT_CREDS={rep:{pin:'1234',pass:'rep123'},admin:{pin:'9999',pass:'admi
 
 let currentRole='rep', currentPIN='', authMode='pin';
 let loggedIn=false, loggedRole=null, loggedRepId=null, loggedRepName=null;
-let reps=[], activities=[], sessions=[], destinations=[], liveLocs={};
+let reps=[], activities=[], sessions=[], destinations=[], products=[], liveLocs={};
 let activeSession=null, gpsWatchId=null, trailPts=[], liveRef=null;
 let timerInt=null, sessStart=null;
 let repMap=null, repMarker=null, repPolyline=null, destMarkers=[];
@@ -573,7 +605,7 @@ function setFbStatus(ok,txt){
   ['rep-fb-st','adm-fb-st'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=txt;});
 }
 function attachListeners(){
-  db.ref('reps').on('value',s=>{reps=objArr(s.val());populateRepSelects();renderRepScreen();renderAdminAll();});
+  db.ref('reps').on('value',s=>{reps=objArr(s.val());populateRepSelects();renderRepScreen();renderAdminAll();renderAdmRepsMini();});
   db.ref('activities').on('value',s=>{activities=objArr(s.val());renderRepScreen();renderAdminAll();});
   db.ref('sessions').on('value',s=>{sessions=objArr(s.val());renderRepScreen();renderAdminAll();});
   db.ref('destinations').on('value',s=>{destinations=objArr(s.val());renderDestList();});
@@ -588,6 +620,13 @@ function attachListeners(){
   db.ref('settings/credentials').on('value',s=>{
     const c=s.val();
     if(c)localStorage.setItem('medrep_creds',JSON.stringify(c));
+  });
+  // Products
+  db.ref('products').on('value',s=>{
+    products=objArr(s.val());
+    populateProductDropdown();
+    const pt=document.getElementById('products-table');
+    if(pt)renderProductsTable();
   });
   // also load branding from Firebase
   db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
@@ -693,6 +732,9 @@ function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classL
 function showRep(){
   showScreen('screen-rep');
   document.getElementById('rep-topbar-title').textContent=loggedRepName||document.getElementById('co-name').textContent;
+  // show Add Rep card only if admin is viewing rep screen
+  const arc=document.getElementById('add-rep-card');
+  if(arc)arc.style.display=loggedRole==='admin'?'':'none';
   populateRepSelects();
   if(loggedRepId){setTimeout(()=>{['gps-rep','f-rep'].forEach(s=>{const el=document.getElementById(s);if(el)el.value=loggedRepId;});},600);}
   renderRepScreen();
@@ -959,6 +1001,7 @@ function aTab(name){
 function renderCredsPanel(){
   const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
   document.getElementById('creds-panel').innerHTML=`
+    <div class="settings-block-title" style="margin-bottom:10px"><i class="ti ti-lock" aria-hidden="true"></i> Login credentials</div>
     <div class="creds-section">
       <div class="creds-section-title"><i class="ti ti-user" aria-hidden="true" style="font-size:13px"></i> Med Rep login</div>
       <div class="creds-row"><label>PIN</label><input type="text" id="rep-pin" maxlength="4" placeholder="4 digits" value="${creds.rep.pin}" inputmode="numeric"></div>
@@ -971,11 +1014,82 @@ function renderCredsPanel(){
     </div>
     <button class="creds-save-btn" onclick="saveCredentials()">Save credentials</button>
     <div class="creds-msg" id="creds-msg"></div>
-    <div class="creds-note">
-      <strong>PIN</strong> must be exactly 4 digits (numbers only).<br>
-      Changes take effect immediately on next login.<br>
-      Credentials are saved to this device and Firebase.
-    </div>`;
+    <div class="creds-note">PIN must be exactly 4 digits. Changes sync to all devices immediately.</div>`;
+  renderAdmRepsMini();
+  renderProductsTable();
+}
+
+function renderAdmRepsMini(){
+  const el=document.getElementById('adm-reps-mini');if(!el)return;
+  if(!reps.length){el.innerHTML='<div class="empty" style="padding:8px">No reps yet.</div>';return;}
+  el.innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Current reps</div>`+
+  reps.map(r=>`<div class="li" style="padding:7px 0">
+    <div class="av" style="width:28px;height:28px;font-size:10px">${inits(r.name)}</div>
+    <div class="li-m"><div class="li-t" style="font-size:12px">${r.name}</div><div class="li-s" style="font-size:11px">${r.territory||''} · ${r.target||20}/mo</div></div>
+    <button class="btn-icon" onclick="deleteRep('${r.fbKey||r.id}')" style="color:#A32D2D;width:28px;height:28px">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+    </button>
+  </div>`).join('');
+}
+
+async function adminAddRep(){
+  const name=document.getElementById('adm-r-name').value.trim();
+  const territory=document.getElementById('adm-r-terr').value.trim();
+  const target=parseInt(document.getElementById('adm-r-target').value)||20;
+  const msg=document.getElementById('rep-add-msg');
+  if(!name){msg.style.color='var(--text-danger)';msg.textContent='Name is required.';return;}
+  const rep={name,territory,target,createdAt:new Date().toISOString()};
+  if(fbReady&&db)await fbPush('reps',rep);
+  else{reps.push({...rep,id:'r'+Date.now()});renderAdmRepsMini();populateRepSelects();}
+  document.getElementById('adm-r-name').value='';
+  document.getElementById('adm-r-terr').value='';
+  document.getElementById('adm-r-target').value='';
+  msg.style.color='var(--text-success)';msg.textContent=`${name} added!`;
+  setTimeout(()=>{if(msg)msg.textContent='';},2500);
+  toast(`${name} added!`);
+}
+
+// ── Products ──────────────────────────────────────────
+function renderProductsTable(){
+  const el=document.getElementById('products-table');if(!el)return;
+  if(!products.length){el.innerHTML='<div class="empty" style="padding:8px;font-size:12px">No products yet. Add one above.</div>';return;}
+  el.innerHTML=`<table class="prod-table">
+    <thead><tr><th>Product name</th><th>Category</th><th style="width:30px"></th></tr></thead>
+    <tbody>${products.map(p=>`<tr>
+      <td style="font-weight:500">${p.name}</td>
+      <td style="color:var(--text2)">${p.category||'—'}</td>
+      <td><button class="btn-icon" onclick="deleteProduct('${p.fbKey||p.id}')" style="color:#A32D2D;width:24px;height:24px;padding:4px">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function addProduct(){
+  const name=document.getElementById('prod-name').value.trim();
+  const category=document.getElementById('prod-cat').value.trim();
+  if(!name){toast('Enter a product name.');return;}
+  const prod={name,category,createdAt:new Date().toISOString()};
+  if(fbReady&&db)await fbPush('products',prod);
+  else{products.push({...prod,id:'p'+Date.now()});renderProductsTable();populateProductDropdown();}
+  document.getElementById('prod-name').value='';
+  document.getElementById('prod-cat').value='';
+  toast(`${name} added to products.`);
+}
+
+async function deleteProduct(key){
+  if(fbReady&&db)await fbRemove('products/'+key);
+  else{products=products.filter(p=>p.fbKey!==key&&p.id!==key);renderProductsTable();populateProductDropdown();}
+}
+
+function populateProductDropdown(){
+  const sel=document.getElementById('f-product-sel');if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— Select product —</option>';
+  products.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name+(p.category?' ('+p.category+')':'');sel.appendChild(o);});
+  if(prev)sel.value=prev;
+  // also update the manual input visibility
+  const mi=document.getElementById('f-product-manual');
+  if(mi)mi.style.display=sel.value===''&&products.length?'':'none';
 }
 
 async function saveCredentials(){
@@ -1172,16 +1286,31 @@ async function deleteRep(key){
 // ─────────────────────────────────────────────────────────────
 //  ACTIVITIES CRUD
 // ─────────────────────────────────────────────────────────────
+function onProductSelChange(){
+  const sel=document.getElementById('f-product-sel');
+  const mi=document.getElementById('f-product-manual');
+  if(!sel||!mi)return;
+  mi.style.display=sel.value===''?'':'none';
+  if(sel.value==='')mi.focus();
+}
+
 async function logActivity(){
   const repId=document.getElementById('f-rep').value;const date=document.getElementById('f-date').value;
   const type=document.getElementById('f-type').value;const doctor=document.getElementById('f-doctor').value.trim();
-  const product=document.getElementById('f-product').value.trim();const outcome=document.getElementById('f-outcome').value;
+  // get product from dropdown or manual input
+  const sel=document.getElementById('f-product-sel');
+  const manual=document.getElementById('f-product-manual');
+  const product=(sel&&sel.value?sel.value:(manual?manual.value:'')).trim();
+  const outcome=document.getElementById('f-outcome').value;
   const notes=document.getElementById('f-notes').value.trim();
   if(!repId||!date||!doctor||!product){toast('Fill in all required fields.');return;}
   const act={repId,date,type,doctor,product,outcome,notes,createdAt:new Date().toISOString()};
   if(fbReady&&db)await fbPush('activities',act);
   else{activities.push({...act,id:'a'+Date.now()});renderRepScreen();}
-  document.getElementById('f-doctor').value='';document.getElementById('f-product').value='';document.getElementById('f-notes').value='';
+  document.getElementById('f-doctor').value='';
+  if(sel)sel.value='';
+  if(manual){manual.value='';manual.style.display='none';}
+  document.getElementById('f-notes').value='';
   toast('Activity saved!');
 }
 async function deleteAct(key){
@@ -1223,7 +1352,12 @@ function seedDemo(){
     {id:'a2',fbKey:'a2',repId:'2',date:'2026-07-11',type:'call',doctor:'Dr. Lim',product:'Losartan',outcome:'Interested',notes:'Follow up next week'},
     {id:'a3',fbKey:'a3',repId:'3',date:'2026-07-11',type:'meeting',doctor:'St. Luke Clinic',product:'Metformin',outcome:'Follow-up needed',notes:''},
   ];
-  populateRepSelects();renderRepScreen();renderAdminAll();
+  products=[
+    {id:'p1',fbKey:'p1',name:'Amoxil',category:'Antibiotic'},
+    {id:'p2',fbKey:'p2',name:'Losartan',category:'Antihypertensive'},
+    {id:'p3',fbKey:'p3',name:'Metformin',category:'Antidiabetic'},
+  ];
+  populateRepSelects();populateProductDropdown();renderRepScreen();renderAdminAll();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1235,6 +1369,11 @@ async function init(){
   await loadBranding();
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('fil-month').value=new Date().toISOString().slice(0,7);
+  // init product dropdown with fallback "type manually" option
+  const ps=document.getElementById('f-product-sel');
+  if(ps){ps.innerHTML='<option value="">— Select product —</option>';ps.appendChild(Object.assign(document.createElement('option'),{value:'',textContent:'Type manually…'}));}
+  const pm=document.getElementById('f-product-manual');
+  if(pm)pm.style.display='';
   initFirebase();
   // Seed demo data after a short delay if Firebase is not providing data
   setTimeout(()=>{ if(!reps.length)seedDemo(); },2500);
