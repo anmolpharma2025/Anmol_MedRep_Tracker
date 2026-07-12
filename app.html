@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#185FA5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MedRep">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-152x152.png">
+<title>Med Rep Tracker Pro</title>
+<style>
+/* ── Reset & Variables ─────────────────────────────── */
+:root{
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#0C447C;--blue-m:#378ADD;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;
+  --red:#A32D2D;--red-l:#FCEBEB;
+  --amber-l:#FAEEDA;--amber-d:#633806;
+  --purple-l:#EEEDFE;--purple-d:#3C3489;
+  --green-l:#EAF3DE;--green-d:#27500A;
+  --gray:#5F5E5A;--gray-l:#F1EFE8;
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#ebebea;
+  --text:#1a1a18;--text2:#5F5E5A;--text3:#888780;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --r:8px;--rl:14px;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f0f0ee;--text2:#a0a0a0;--text3:#666;
+  --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+  --blue-l:#0c2a4a;--teal-l:#062e1e;--red-l:#3a1010;--purple-l:#1a1840;--green-l:#0f2008;--amber-l:#2a1a00;--gray-l:#2a2a28;
+}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;overscroll-behavior:none;background:var(--bg);color:var(--text)}
+body{display:flex;flex-direction:column}
+
+/* ── Screen system ─────────────────────────────────── */
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.active{display:flex}
+
+/* ══════════════════════════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════════════════════════ */
+#screen-login{background:linear-gradient(145deg,#0C447C 0%,#185FA5 50%,#1a7abf 75%,#1D9E75 100%);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.login-outer{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--st)+20px) 20px calc(var(--sb)+24px)}
+.login-card{width:100%;max-width:360px;background:#fff;border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.15);overflow:hidden}
+@media(prefers-color-scheme:dark){.login-card{background:#1c1c1e;box-shadow:0 24px 64px rgba(0,0,0,.6)}}
+
+/* Logo area */
+.logo-area{background:linear-gradient(160deg,#0C447C,#185FA5 55%,#1a7abf);padding:32px 28px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;position:relative;overflow:hidden}
+.logo-area::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 75% 25%,rgba(255,255,255,.08),transparent 55%)}
+.logo-wrap{width:88px;height:88px;border-radius:18px;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative;z-index:1;transition:transform .2s;backdrop-filter:blur(4px)}
+.logo-wrap:hover{transform:scale(1.05)}
+.logo-wrap img{width:100%;height:100%;object-fit:contain;padding:6px;display:none}
+.logo-placeholder{display:flex;flex-direction:column;align-items:center;gap:4px}
+.logo-placeholder svg{width:34px;height:34px;stroke:rgba(255,255,255,.85);fill:none;stroke-width:2}
+.logo-placeholder span{font-size:9px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:.04em}
+#logo-file{display:none}
+.company-name-el{font-size:19px;font-weight:800;color:#fff;text-align:center;position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.2)}
+.company-sub-el{font-size:11px;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;letter-spacing:.06em;position:relative;z-index:1}
+.edit-name-btn{font-size:10px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;position:relative;z-index:1}
+.edit-name-btn:hover{color:rgba(255,255,255,.8)}
+
+/* Form */
+.login-form{padding:24px 24px 20px}
+.role-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.role-btn{padding:11px 8px;border-radius:var(--r);border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s}
+.role-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.role-btn .role-lbl{font-size:10px;font-weight:600;opacity:.7}
+.role-btn.sel{border-color:var(--blue);background:var(--blue-l);color:var(--blue-d)}
+.lfield{margin-bottom:12px}
+.lfield label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.lfield select,.lfield input{width:100%;padding:11px 12px;border:1.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:14px;-webkit-appearance:none;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+.lfield select:focus,.lfield input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+.auth-tabs{display:flex;border-radius:var(--r);overflow:hidden;border:1.5px solid var(--border2);margin-bottom:14px}
+.auth-tab{flex:1;padding:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:inherit;transition:all .15s}
+.auth-tab.sel{background:var(--blue);color:#fff}
+
+/* PIN pad */
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:16px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all .12s}
+.pin-dot.on{background:var(--blue);border-color:var(--blue)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.pk{padding:14px 8px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:19px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all .12s;user-select:none}
+.pk:hover{background:var(--blue-l);border-color:var(--blue-m);color:var(--blue-d)}
+.pk:active{transform:scale(.93);background:var(--blue);color:#fff;border-color:var(--blue)}
+.pk .ks{font-size:7px;letter-spacing:.12em;color:var(--text3);font-weight:700}
+.pk-zero{grid-column:2}.pk-del{grid-column:3;font-size:15px}
+.err-box{background:var(--red-l);color:var(--red);border-radius:var(--r);padding:9px 12px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;display:none}
+.err-box.on{display:block}
+.login-btn{width:100%;padding:13px;border-radius:var(--r);background:var(--blue);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.login-btn:hover{opacity:.9}
+.login-btn:active{opacity:.75}
+.login-btn.admin-mode{background:var(--blue-d)}
+.login-footer{padding:0 24px 18px;text-align:center;font-size:11px;color:var(--text3)}
+.login-footer strong{color:var(--text2)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .32s ease}
+
+/* Name modal */
+.modal-bg{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.modal-bg.on{display:flex}
+.modal-box{background:var(--bg);border-radius:var(--rl);padding:22px;width:100%;max-width:300px;box-shadow:0 16px 48px rgba(0,0,0,.3)}
+.modal-box h3{font-size:15px;font-weight:700;margin-bottom:12px}
+.modal-box input{width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:15px;outline:none;font-family:inherit;margin-bottom:12px}
+.modal-box input:focus{border-color:var(--blue)}
+.modal-btns{display:flex;gap:8px}
+.modal-btns button{flex:1;padding:10px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit}
+.mbtn-cancel{background:var(--bg2);color:var(--text2)}
+.mbtn-save{background:var(--blue);color:#fff}
+
+/* ══════════════════════════════════════════════════════
+   REP & ADMIN SHARED CHROME
+══════════════════════════════════════════════════════ */
+.topbar{background:var(--blue);color:#fff;padding:calc(var(--st)+10px) 14px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:8px;min-width:0}
+.topbar-logo{width:28px;height:28px;border-radius:6px;object-fit:contain;background:rgba(255,255,255,.15);padding:2px;display:none;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.tb-badge{font-size:11px;background:rgba(255,255,255,.18);padding:2px 8px;border-radius:20px;white-space:nowrap}
+.tb-btn{font-size:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);color:#fff;padding:5px 9px;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap}
+.tb-btn:hover{background:rgba(255,255,255,.25)}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:#f59e0b;display:inline-block;margin-right:4px;vertical-align:middle}
+.fb-dot.ok{background:#1D9E75}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.fb-dot.ok{animation:pulse 2s infinite}
+
+/* ══════════════════════════════════════════════════════
+   REP SCREEN
+══════════════════════════════════════════════════════ */
+#screen-rep .main-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:14px;padding-bottom:22px}
+.page.active{display:block}
+.bottom-nav{display:flex;background:var(--bg);border-top:0.5px solid var(--border);padding-bottom:calc(var(--sb));flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:7px 4px 5px;cursor:pointer;gap:2px;color:var(--text2);border:none;background:none;font-size:10px;font-weight:600;font-family:inherit}
+.nav-item.active{color:var(--blue)}
+.nav-item svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Cards */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:14px 16px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.metric{background:var(--bg2);border-radius:var(--r);padding:12px 14px}
+.metric-label{font-size:11px;color:var(--text2);margin-bottom:2px}
+.metric-val{font-size:24px;font-weight:700;color:var(--text)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:700}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:14px;-webkit-appearance:none;outline:none;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+.field textarea{height:64px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:opacity .15s}
+.btn:active{opacity:.7}
+.btn-blue{background:var(--blue);color:#fff;width:100%;margin-top:6px}
+.btn-green{background:var(--teal);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-icon{padding:7px;width:34px;height:34px;border-radius:var(--r);background:var(--bg2);border:0.5px solid var(--border);color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;white-space:nowrap}
+.b-visit{background:var(--blue-l);color:var(--blue-d)}.b-call{background:var(--green-l);color:var(--green-d)}
+.b-meeting{background:var(--purple-l);color:var(--purple-d)}.b-sample{background:var(--amber-l);color:var(--amber-d)}
+.b-on{background:var(--teal-l);color:var(--teal-d)}.b-off{background:var(--gray-l);color:var(--gray)}
+.li{padding:10px 0;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;gap:10px}
+.li:last-child{border-bottom:none;padding-bottom:0}
+.li-m{flex:1;min-width:0}
+.li-t{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-s{font-size:12px;color:var(--text2);margin-top:2px}
+.li-r{text-align:right;flex-shrink:0;font-size:12px;color:var(--text2)}
+.pbar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:5px}
+.pfill{height:100%;border-radius:3px}
+.av{width:34px;height:34px;border-radius:50%;background:var(--blue-l);color:var(--blue-d);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.empty{text-align:center;padding:28px 16px;color:var(--text3);font-size:13px}
+.filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-row select,.filter-row input{flex:1;min-width:100px;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;-webkit-appearance:none;font-family:inherit}
+.gmap-wrap{width:100%;height:290px;border-radius:var(--rl);overflow:hidden;border:0.5px solid var(--border);margin-bottom:12px;background:var(--blue-l)}
+#rep-map{width:100%;height:100%}
+.sess-ctl{display:flex;gap:8px;margin-bottom:12px}
+.sess-ctl .btn{flex:1;padding:12px}
+.gps-info{background:var(--bg2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:12px;font-family:monospace;min-height:38px;line-height:1.6}
+.gpulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:5px;vertical-align:middle}
+.gpulse.on{animation:pulse 1.3s infinite}
+.dest-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.dest-item{background:var(--bg2);border-radius:var(--r);padding:9px 12px;display:flex;align-items:center;gap:8px;border:0.5px solid var(--border)}
+.dest-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dest-txt{flex:1;font-size:13px;color:var(--text)}
+.dbadge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;flex-shrink:0}
+.dp{background:var(--amber-l);color:var(--amber-d)}.dd{background:var(--green-l);color:var(--green-d)}.da{background:var(--blue-l);color:var(--blue-d)}
+.dest-add{display:flex;gap:8px}
+.dest-add input{flex:1;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:14px;-webkit-appearance:none;outline:none;font-family:inherit}
+.dest-add input:focus{border-color:var(--blue)}
+
+/* ══════════════════════════════════════════════════════
+   ADMIN SCREEN
+══════════════════════════════════════════════════════ */
+#screen-admin{background:var(--bg)}
+.admin-layout{flex:1;display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:700px){.admin-layout{flex-direction:row}}
+.admin-map-side{flex:1;position:relative;min-height:240px}
+#admin-map{width:100%;height:100%;min-height:240px}
+.map-ctrls{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:5px;z-index:10}
+.mcbtn{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r);padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12);font-family:inherit}
+.mcbtn:hover{background:var(--bg2)}.mcbtn.on{background:var(--blue-l);color:var(--blue-d);border-color:var(--blue)}
+.admin-side{width:100%;background:var(--bg);border-top:0.5px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:50vh}
+@media(min-width:700px){.admin-side{width:280px;border-top:none;border-left:0.5px solid var(--border);max-height:none}}
+.admin-inner{padding:14px}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.am{background:var(--bg2);border-radius:var(--r);padding:10px 12px}
+.am-l{font-size:10px;color:var(--text2);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.am-v{font-size:20px;font-weight:700;color:var(--text)}
+.atabs{display:flex;gap:3px;background:var(--bg2);border-radius:var(--r);padding:3px;border:0.5px solid var(--border);margin-bottom:12px}
+.atab{flex:1;font-size:11px;padding:5px 4px;border-radius:6px;cursor:pointer;color:var(--text2);border:none;background:transparent;font-weight:700;font-family:inherit}
+.atab.on{background:var(--bg);color:var(--text);border:0.5px solid var(--border)}
+.apanel{display:none}.apanel.on{display:block}
+.ptitle{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.rcard{border:0.5px solid var(--border);border-radius:var(--rl);padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.rcard.is-on{border-left:3px solid var(--teal)}.rcard.is-off{border-left:3px solid var(--gray)}
+.rcard-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.rname{font-size:13px;font-weight:700;color:var(--text)}
+.rdet{font-size:11px;color:var(--text2);line-height:1.5}
+.rcoords{font-size:10px;color:var(--text3);font-family:monospace;margin-top:1px}
+.rstale{font-size:10px;color:var(--teal);font-weight:700}
+.fi{padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.fi:last-child{border-bottom:none}
+.fi-t{font-weight:700;color:var(--text)}.fi-s{color:var(--text2);font-size:11px;margin-top:1px}
+.stbl{width:100%;border-collapse:collapse;font-size:11px}
+.stbl th{text-align:left;padding:4px 5px;color:var(--text3);border-bottom:0.5px solid var(--border);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.stbl td{padding:5px 5px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+.stbl tr:last-child td{border-bottom:none}
+.upd{font-size:10px;color:var(--text3);text-align:center;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(72px + var(--sb));left:50%;transform:translateX(-50%) translateY(12px);background:#1a1a18;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:all .2s;pointer-events:none;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#screen-admin .toast{bottom:16px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-login">
+<div class="login-outer">
+<div class="login-card">
+
+  <div class="logo-area">
+    <div class="logo-wrap" onclick="document.getElementById('logo-file').click()" title="Tap to upload logo">
+      <img id="logo-img" alt="Company logo">
+      <div class="logo-placeholder" id="logo-ph">
+        <svg viewBox="0 0 24 24"><path d="M12 2L12 22M2 12L22 12" stroke-width="3"/></svg>
+        <span>Upload Logo</span>
+      </div>
+    </div>
+    <input type="file" id="logo-file" accept="image/*" onchange="handleLogoUpload(event)">
+    <div style="text-align:center;position:relative;z-index:1">
+      <div class="company-name-el" id="co-name">MedRep Tracker Pro</div>
+      <div class="company-sub-el">Field Force Management</div>
+      <button class="edit-name-btn" onclick="openNameModal()">✎ Edit company name</button>
+    </div>
+  </div>
+
+  <div class="login-form">
+    <div class="role-row">
+      <button class="role-btn sel" id="rbtn-rep" onclick="setRole('rep')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Med Rep <span class="role-lbl">Field</span>
+      </button>
+      <button class="role-btn" id="rbtn-admin" onclick="setRole('admin')">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+        Admin <span class="role-lbl">Manager</span>
+      </button>
+    </div>
+
+    <div class="lfield" id="rep-field">
+      <label>Your name</label>
+      <select id="rep-sel">
+        <option value="">— Select your name —</option>
+      </select>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab sel" id="atab-pin" onclick="setAuthMode('pin')">PIN</button>
+      <button class="auth-tab" id="atab-pass" onclick="setAuthMode('pass')">Password</button>
+    </div>
+
+    <div id="pin-section">
+      <div class="pin-dots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-grid">
+        <button class="pk" onclick="pk('1')">1</button>
+        <button class="pk" onclick="pk('2')">2<span class="ks">ABC</span></button>
+        <button class="pk" onclick="pk('3')">3<span class="ks">DEF</span></button>
+        <button class="pk" onclick="pk('4')">4<span class="ks">GHI</span></button>
+        <button class="pk" onclick="pk('5')">5<span class="ks">JKL</span></button>
+        <button class="pk" onclick="pk('6')">6<span class="ks">MNO</span></button>
+        <button class="pk" onclick="pk('7')">7<span class="ks">PQRS</span></button>
+        <button class="pk" onclick="pk('8')">8<span class="ks">TUV</span></button>
+        <button class="pk" onclick="pk('9')">9<span class="ks">WXYZ</span></button>
+        <button class="pk pk-zero" onclick="pk('0')">0</button>
+        <button class="pk pk-del" onclick="pdel()">⌫</button>
+      </div>
+    </div>
+
+    <div id="pass-section" style="display:none">
+      <div class="lfield">
+        <label>Password</label>
+        <input type="password" id="pass-in" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+
+    <div class="err-box" id="err-box"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+  </div>
+
+  <div class="login-footer">
+    Default PIN: <strong>1234</strong> (Rep) · <strong>9999</strong> (Admin)<br>
+    <span style="font-size:10px;opacity:.6">v4.0 · Firebase Edition</span>
+  </div>
+</div>
+</div>
+</div><!-- /screen-login -->
+
+<!-- Name modal -->
+<div class="modal-bg" id="name-modal">
+  <div class="modal-box">
+    <h3>Company name</h3>
+    <input type="text" id="name-in" placeholder="Your company name" maxlength="40" onkeydown="if(event.key==='Enter')saveName()">
+    <div class="modal-btns">
+      <button class="mbtn-cancel" onclick="closeNameModal()">Cancel</button>
+      <button class="mbtn-save" onclick="saveName()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     REP SCREEN
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-rep">
+  <div class="topbar">
+    <div class="topbar-left">
+      <img class="topbar-logo" id="rep-topbar-logo" alt="logo">
+      <div class="topbar-title" id="rep-topbar-title">Med Rep Tracker</div>
+    </div>
+    <div class="topbar-right">
+      <span class="tb-badge"><span class="fb-dot" id="rep-fb-dot"></span><span id="rep-fb-st">…</span></span>
+      <button class="tb-btn" onclick="switchToAdmin()">Admin</button>
+      <button class="tb-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main-scroll">
+    <!-- Dashboard -->
+    <div class="page active" id="pg-dash">
+      <div class="metrics" id="r-metrics"></div>
+      <div class="card"><div class="card-title">Rep performance this month</div><div id="r-perf"></div></div>
+      <div class="card"><div class="card-title">Recent activities</div><div id="r-recent"></div></div>
+    </div>
+    <!-- GPS -->
+    <div class="page" id="pg-gps">
+      <div class="card">
+        <div class="card-title">
+          <span><span class="gpulse" id="gpulse"></span>Live GPS</span>
+          <span id="gps-timer" style="font-size:12px;color:var(--text2);font-weight:400;font-family:monospace"></span>
+        </div>
+        <div class="field"><label>Rep</label><select id="gps-rep"></select></div>
+        <div class="sess-ctl">
+          <button class="btn btn-green" id="btn-login-gps" onclick="startSession()">▶ Log In</button>
+          <button class="btn btn-red" id="btn-logout-gps" onclick="endSession()" style="display:none">■ Log Out</button>
+        </div>
+        <div class="gps-info" id="gps-info">Select a rep and tap Log In to begin tracking.</div>
+        <div class="gmap-wrap"><div id="rep-map"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Destinations today <span id="dest-count" style="font-size:12px;color:var(--text2);font-weight:400"></span></div>
+        <div class="dest-list" id="dest-list"></div>
+        <div class="dest-add">
+          <input type="text" id="dest-in" placeholder="Add clinic, hospital, doctor…" autocomplete="off" onkeydown="if(event.key==='Enter')addDest()">
+          <button class="btn-icon" onclick="addDest()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">Sessions</div><div id="r-sessions"></div></div>
+    </div>
+    <!-- Log -->
+    <div class="page" id="pg-log">
+      <div class="card">
+        <div class="card-title">Log new activity</div>
+        <div class="field"><label>Rep</label><select id="f-rep"></select></div>
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+          <div class="field"><label>Type</label>
+            <select id="f-type">
+              <option value="visit">Doctor visit</option><option value="call">Phone call</option>
+              <option value="meeting">Group meeting</option><option value="sample">Sample drop</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Doctor / Contact</label><input type="text" id="f-doctor" placeholder="Dr. name or facility" autocomplete="off"></div>
+        <div class="field"><label>Product pitched</label><input type="text" id="f-product" placeholder="Product name" autocomplete="off"></div>
+        <div class="field"><label>Outcome</label>
+          <select id="f-outcome">
+            <option>Interested</option><option>Follow-up needed</option>
+            <option>Prescription written</option><option>Not interested</option><option>Samples accepted</option>
+          </select>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Optional…"></textarea></div>
+        <button class="btn btn-blue" onclick="logActivity()">Save Activity</button>
+      </div>
+    </div>
+    <!-- Reps -->
+    <div class="page" id="pg-reps">
+      <div class="card">
+        <div class="card-title">Add rep</div>
+        <div class="field"><label>Full name</label><input type="text" id="r-name" placeholder="Rep name"></div>
+        <div class="field"><label>Territory</label><input type="text" id="r-terr" placeholder="City / region"></div>
+        <div class="field"><label>Monthly visit target</label><input type="number" id="r-target" placeholder="e.g. 30" min="1"></div>
+        <button class="btn btn-blue" onclick="addRep()">Add Rep</button>
+      </div>
+      <div class="card"><div class="card-title">All reps</div><div id="reps-list"></div></div>
+    </div>
+    <!-- History -->
+    <div class="page" id="pg-hist">
+      <div class="card">
+        <div class="card-title">History
+          <button class="btn-icon" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M12 2v13m-5-5l5 5 5-5M2 17v2a2 2 0 002 2h16a2 2 0 002-2v-2"/></svg></button>
+        </div>
+        <div class="filter-row">
+          <select id="fil-rep" onchange="renderHistory()"><option value="">All reps</option></select>
+          <select id="fil-type" onchange="renderHistory()">
+            <option value="">All types</option><option value="visit">Visit</option>
+            <option value="call">Call</option><option value="meeting">Meeting</option><option value="sample">Sample</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <input type="month" id="fil-month" onchange="renderHistory()">
+          <input type="text" id="fil-q" placeholder="Search…" oninput="renderHistory()">
+        </div>
+        <div id="hist-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="repGo('dash')" id="nav-dash">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home
+    </button>
+    <button class="nav-item" onclick="repGo('gps')" id="nav-gps">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/></svg>GPS
+    </button>
+    <button class="nav-item" onclick="repGo('log')" id="nav-log">
+      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log
+    </button>
+    <button class="nav-item" onclick="repGo('reps')" id="nav-reps">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>Reps
+    </button>
+    <button class="nav-item" onclick="repGo('hist')" id="nav-hist">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>History
+    </button>
+  </nav>
+</div><!-- /screen-rep -->
+
+<!-- ═══════════════════════════════════════════════════
+     ADMIN SCREEN
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-admin">
+  <div class="topbar">
+    <div class="topbar-left">
+      <img class="topbar-logo" id="admin-topbar-logo" alt="logo">
+      <div class="topbar-title">Admin — Live Map</div>
+    </div>
+    <div class="topbar-right">
+      <span class="tb-badge" id="online-count">0 online</span>
+      <span class="tb-badge"><span class="fb-dot" id="adm-fb-dot"></span><span id="adm-fb-st">…</span></span>
+      <button class="tb-btn" onclick="switchToRep()">Rep View</button>
+      <button class="tb-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="admin-layout">
+    <div class="admin-map-side">
+      <div id="admin-map"></div>
+      <div class="map-ctrls">
+        <button class="mcbtn on" id="mf-all" onclick="setMapFilter('all')">All reps</button>
+        <button class="mcbtn" id="mf-online" onclick="setMapFilter('online')">Online only</button>
+        <button class="mcbtn" id="mf-trail" onclick="toggleTrails()">Trails: on</button>
+        <button class="mcbtn" onclick="fitAll()">Fit all</button>
+      </div>
+    </div>
+    <div class="admin-side">
+      <div class="admin-inner">
+        <div class="mg" id="adm-metrics"></div>
+        <div class="atabs">
+          <button class="atab on" onclick="aTab('reps')">Reps</button>
+          <button class="atab" onclick="aTab('feed')">Feed</button>
+          <button class="atab" onclick="aTab('sess')">Sessions</button>
+        </div>
+        <div class="apanel on" id="ap-reps"><div class="ptitle">Field reps</div><div id="adm-reps"></div></div>
+        <div class="apanel" id="ap-feed"><div class="ptitle">Recent activities</div><div id="adm-feed"></div></div>
+        <div class="apanel" id="ap-sess"><div class="ptitle">Today's sessions</div><div id="adm-sess"></div></div>
+        <div class="upd" id="upd-time"></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /screen-admin -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDKs -->
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+'use strict';
+// ─────────────────────────────────────────────────────────────
+//  CONSTANTS & STATE
+// ─────────────────────────────────────────────────────────────
+const COLORS=['#185FA5','#1D9E75','#D85A30','#7F77DD','#BA7517','#993556','#0F6E56','#A32D2D'];
+const DEFAULT_CREDS={rep:{pin:'1234',pass:'rep123'},admin:{pin:'9999',pass:'admin123'}};
+
+let currentRole='rep', currentPIN='', authMode='pin';
+let loggedIn=false, loggedRole=null, loggedRepId=null, loggedRepName=null;
+let reps=[], activities=[], sessions=[], destinations=[], liveLocs={};
+let activeSession=null, gpsWatchId=null, trailPts=[], liveRef=null;
+let timerInt=null, sessStart=null;
+let repMap=null, repMarker=null, repPolyline=null, destMarkers=[];
+let adminMap=null, admMarkers={}, admPolylines={}, admInfoWins={};
+let mapFilter='all', showTrails=true;
+let db=null, fbReady=false;
+
+// ─────────────────────────────────────────────────────────────
+//  INDEXEDDB (branding + offline fallback)
+// ─────────────────────────────────────────────────────────────
+const IDB='medrep_v4';
+function openIDB(){return new Promise((r,j)=>{const q=indexedDB.open(IDB,1);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');};q.onsuccess=e=>r(e.target.result);q.onerror=j;});}
+async function iGet(k){try{const d=await openIDB();return new Promise((r,j)=>{const q=d.transaction('kv','readonly').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=j;});}catch{return null;}}
+async function iSet(k,v){try{const d=await openIDB();return new Promise((r,j)=>{const tx=d.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=r;tx.onerror=j;});}catch{}}
+
+// ─────────────────────────────────────────────────────────────
+//  FIREBASE
+// ─────────────────────────────────────────────────────────────
+function initFirebase(){
+  try{
+    if(typeof FIREBASE_CONFIG==='undefined'||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
+      setFbStatus(false,'Not configured');return;
+    }
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.database();
+    db.ref('.info/connected').on('value',s=>{
+      const ok=s.val()===true;
+      setFbStatus(ok,ok?'Live':'Offline');
+      if(ok)attachListeners();
+    });
+    fbReady=true;
+  }catch(e){setFbStatus(false,'Error');}
+}
+function setFbStatus(ok,txt){
+  ['rep-fb-dot','adm-fb-dot'].forEach(id=>{const el=document.getElementById(id);if(el)el.className='fb-dot'+(ok?' ok':'');});
+  ['rep-fb-st','adm-fb-st'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=txt;});
+}
+function attachListeners(){
+  db.ref('reps').on('value',s=>{reps=objArr(s.val());populateRepSelects();renderRepScreen();renderAdminAll();});
+  db.ref('activities').on('value',s=>{activities=objArr(s.val());renderRepScreen();renderAdminAll();});
+  db.ref('sessions').on('value',s=>{sessions=objArr(s.val());renderRepScreen();renderAdminAll();});
+  db.ref('destinations').on('value',s=>{destinations=objArr(s.val());renderDestList();});
+  db.ref('live_locations').on('value',s=>{
+    liveLocs=s.val()||{};
+    renderAdminAll();updateAdminMarkers();
+    const n=Object.keys(liveLocs).length;
+    const oc=document.getElementById('online-count');if(oc)oc.textContent=n+' online';
+    const upd=document.getElementById('upd-time');if(upd)upd.textContent='Updated '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  });
+  // also load branding from Firebase
+  db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
+}
+function objArr(val){return val?Object.entries(val).map(([k,v])=>({...v,fbKey:k})):[];}
+function fbPush(path,data){return db?db.ref(path).push(data):Promise.resolve({key:'loc_'+Date.now()});}
+function fbSet(path,data){return db?db.ref(path).set(data):Promise.resolve();}
+function fbUpdate(path,data){return db?db.ref(path).update(data):Promise.resolve();}
+function fbRemove(path){return db?db.ref(path).remove():Promise.resolve();}
+
+// ─────────────────────────────────────────────────────────────
+//  BRANDING
+// ─────────────────────────────────────────────────────────────
+async function loadBranding(){
+  const name=await iGet('co_name'), logo=await iGet('co_logo');
+  if(name)applyName(name);
+  if(logo)applyLogo(logo);
+}
+function applyName(name){
+  document.getElementById('co-name').textContent=name;
+  document.getElementById('rep-topbar-title').textContent=name;
+  iSet('co_name',name);
+}
+function applyLogo(dataUrl){
+  const img=document.getElementById('logo-img'),ph=document.getElementById('logo-ph');
+  img.src=dataUrl;img.style.display='block';ph.style.display='none';
+  // topbar logos
+  ['rep-topbar-logo','admin-topbar-logo'].forEach(id=>{const el=document.getElementById(id);if(el){el.src=dataUrl;el.style.display='block';}});
+  iSet('co_logo',dataUrl);
+}
+function handleLogoUpload(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const url=ev.target.result;
+    applyLogo(url);
+    if(db)db.ref('branding/logo').set(url);
+  };
+  r.readAsDataURL(f);
+}
+function openNameModal(){document.getElementById('name-in').value=document.getElementById('co-name').textContent;document.getElementById('name-modal').classList.add('on');setTimeout(()=>document.getElementById('name-in').focus(),80);}
+function closeNameModal(){document.getElementById('name-modal').classList.remove('on');}
+function saveName(){const v=document.getElementById('name-in').value.trim();if(v){applyName(v);if(db)db.ref('branding/name').set(v);}closeNameModal();}
+document.getElementById('name-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeNameModal();});
+
+// ─────────────────────────────────────────────────────────────
+//  LOGIN
+// ─────────────────────────────────────────────────────────────
+function setRole(r){
+  currentRole=r;currentPIN='';updPinDots();clearErr();
+  document.getElementById('rbtn-rep').classList.toggle('sel',r==='rep');
+  document.getElementById('rbtn-admin').classList.toggle('sel',r==='admin');
+  document.getElementById('rep-field').style.display=r==='rep'?'':'none';
+  document.getElementById('login-btn').className='login-btn'+(r==='admin'?' admin-mode':'');
+  document.getElementById('pass-in').value='';
+}
+function setAuthMode(m){
+  authMode=m;currentPIN='';updPinDots();clearErr();
+  document.getElementById('pin-section').style.display=m==='pin'?'':'none';
+  document.getElementById('pass-section').style.display=m==='pass'?'':'none';
+  document.getElementById('atab-pin').classList.toggle('sel',m==='pin');
+  document.getElementById('atab-pass').classList.toggle('sel',m==='pass');
+  if(m==='pass')setTimeout(()=>document.getElementById('pass-in').focus(),80);
+}
+function pk(d){if(currentPIN.length>=4)return;currentPIN+=d;updPinDots();if(currentPIN.length===4)setTimeout(doLogin,100);}
+function pdel(){currentPIN=currentPIN.slice(0,-1);updPinDots();clearErr();}
+function updPinDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<currentPIN.length);}
+function showErr(msg){const e=document.getElementById('err-box');e.textContent=msg;e.classList.add('on');const t=authMode==='pin'?document.querySelector('.pin-grid'):document.getElementById('pass-in');t.classList.remove('shake');void t.offsetWidth;t.classList.add('shake');setTimeout(()=>t.classList.remove('shake'),350);if(authMode==='pin'){currentPIN='';updPinDots();}}
+function clearErr(){document.getElementById('err-box').classList.remove('on');}
+
+function doLogin(){
+  clearErr();
+  const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
+  if(currentRole==='rep'&&!document.getElementById('rep-sel').value){showErr('Select your name first.');return;}
+  const input=authMode==='pin'?currentPIN:document.getElementById('pass-in').value;
+  const expected=authMode==='pin'?creds[currentRole].pin:creds[currentRole].pass;
+  if(!input){showErr('Enter your '+(authMode==='pin'?'PIN':'password')+'.');return;}
+  if(input!==expected){showErr('Incorrect '+(authMode==='pin'?'PIN':'password')+'. Try again.');return;}
+  // Success
+  loggedRole=currentRole;
+  if(currentRole==='rep'){
+    const sel=document.getElementById('rep-sel');
+    loggedRepId=sel.value;
+    loggedRepName=sel.options[sel.selectedIndex]?.text||'Rep';
+  }
+  loggedIn=true;
+  document.getElementById('login-btn').innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle"></span>Signing in…';
+  document.getElementById('login-btn').disabled=true;
+  setTimeout(()=>{currentRole==='admin'?showAdmin():showRep();},500);
+}
+document.addEventListener('keydown',e=>{
+  if(!loggedIn&&authMode==='pin'&&!document.getElementById('name-modal').classList.contains('on')){
+    if(e.key>='0'&&e.key<='9')pk(e.key);
+    else if(e.key==='Backspace')pdel();
+    else if(e.key==='Enter')doLogin();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+//  SCREEN SWITCHING
+// ─────────────────────────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showRep(){
+  showScreen('screen-rep');
+  document.getElementById('rep-topbar-title').textContent=loggedRepName||document.getElementById('co-name').textContent;
+  populateRepSelects();
+  if(loggedRepId){setTimeout(()=>{['gps-rep','f-rep'].forEach(s=>{const el=document.getElementById(s);if(el)el.value=loggedRepId;});},600);}
+  renderRepScreen();
+}
+function showAdmin(){showScreen('screen-admin');renderAdminAll();setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);}
+function switchToAdmin(){if(loggedRole==='admin'||true)showAdmin();}// allow toggle
+function switchToRep(){showRep();}
+function logout(){
+  loggedIn=false;loggedRole=null;loggedRepId=null;loggedRepName=null;
+  currentPIN='';updPinDots();
+  document.getElementById('login-btn').textContent='Sign In';
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('pass-in').value='';
+  showScreen('screen-login');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────────────────────
+function repName(id){const r=reps.find(x=>x.fbKey===id||String(x.id)===String(id));return r?r.name:'—';}
+function inits(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function tBadge(t){const m={visit:['b-visit','Visit'],call:['b-call','Call'],meeting:['b-meeting','Meeting'],sample:['b-sample','Sample']};const[c,l]=m[t]||['','t'];return`<span class="badge ${c}">${l}</span>`;}
+function isThisMonth(d){if(!d)return false;const dt=new Date(d),n=new Date();return dt.getMonth()===n.getMonth()&&dt.getFullYear()===n.getFullYear();}
+function fDate(iso){return new Date(iso+'T00:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});}
+function fDT(iso){const d=new Date(iso);return d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});}
+function fDur(ms){if(!ms||ms<0)return'—';const m=Math.round(ms/60000);return m<60?m+'m':`${Math.floor(m/60)}h ${m%60}m`;}
+function fAgo(ts){if(!ts)return'';const s=Math.round((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago';}
+function today(){return new Date().toISOString().slice(0,10);}
+function toast(msg,dur=2200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),dur);}
+function repNav(id){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const el=document.getElementById('nav-'+id);if(el)el.classList.add('active');}
+
+// ─────────────────────────────────────────────────────────────
+//  REP SCREEN NAVIGATION
+// ─────────────────────────────────────────────────────────────
+function repGo(tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pg-'+tab).classList.add('active');
+  repNav(tab==='dash'?'dash':tab==='gps'?'gps':tab==='log'?'log':tab==='reps'?'reps':'hist');
+  if(tab==='gps'){renderDestList();renderSessions();setTimeout(initRepMap,80);}
+  if(tab==='reps')renderRepsList();
+  if(tab==='hist'){populateRepSelects();renderHistory();}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  REP DASHBOARD
+// ─────────────────────────────────────────────────────────────
+function renderRepScreen(){renderMetrics();renderRepPerf();renderRecent();}
+function renderMetrics(){
+  const total=activities.length,month=activities.filter(a=>isThisMonth(a.date)).length;
+  const rx=activities.filter(a=>a.outcome==='Prescription written').length;
+  const online=sessions.filter(s=>!s.logoutTime).length;
+  document.getElementById('r-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Total activities</div><div class="metric-val">${total}</div></div>
+    <div class="metric"><div class="metric-label">This month</div><div class="metric-val">${month}</div></div>
+    <div class="metric"><div class="metric-label">Prescriptions</div><div class="metric-val">${rx}</div></div>
+    <div class="metric"><div class="metric-label">Reps online</div><div class="metric-val" style="color:var(--teal)">${online}</div></div>`;
+}
+function renderRepPerf(){
+  const el=document.getElementById('r-perf');
+  if(!reps.length){el.innerHTML='<div class="empty">No reps yet.</div>';return;}
+  el.innerHTML=reps.map(r=>{
+    const v=activities.filter(a=>(a.repId===r.fbKey||a.repId===String(r.id))&&isThisMonth(a.date)&&a.type==='visit').length;
+    const pct=Math.min(100,Math.round(v/(r.target||20)*100));
+    const col=pct>=100?'#1D9E75':pct>=60?'#185FA5':'#E24B4A';
+    const on=sessions.find(s=>(s.repId===r.fbKey||s.repId===String(r.id))&&!s.logoutTime);
+    return`<div class="li"><div class="av">${inits(r.name)}</div>
+      <div class="li-m"><div class="li-t">${r.name}${on?' <span class="badge b-on">Online</span>':''}</div>
+      <div class="li-s">${r.territory||''}</div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${col}"></div></div></div>
+      <div class="li-r">${v}/${r.target||20}</div></div>`;
+  }).join('');
+}
+function renderRecent(){
+  const el=document.getElementById('r-recent');
+  const s=[...activities].sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'')).slice(0,8);
+  el.innerHTML=s.length?s.map(a=>`<div class="li"><div class="li-m">
+    <div class="li-t">${a.doctor} — ${a.product}</div>
+    <div class="li-s">${repName(a.repId)} · ${fDate(a.date)}</div>
+  </div>${tBadge(a.type)}</div>`).join(''):'<div class="empty">No activities yet.</div>';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  GOOGLE MAPS — REP
+// ─────────────────────────────────────────────────────────────
+function initRepMap(){
+  if(repMap||!document.getElementById('rep-map'))return;
+  loadGoogleMaps(()=>{
+    repMap=new google.maps.Map(document.getElementById('rep-map'),{
+      center:{lat:10.35,lng:123.95},zoom:13,
+      mapTypeControl:false,streetViewControl:false,fullscreenControl:true
+    });
+    if(trailPts.length)updateRepTrail();
+  });
+}
+function updateRepTrail(){
+  if(!repMap||!window.google)return;
+  if(repPolyline)repPolyline.setMap(null);
+  if(trailPts.length>1){
+    repPolyline=new google.maps.Polyline({path:trailPts.map(p=>({lat:p.lat,lng:p.lng})),geodesic:true,strokeColor:'#378ADD',strokeWeight:3,strokeOpacity:.85,map:repMap});
+  }
+  if(trailPts.length){
+    const last=trailPts[trailPts.length-1];
+    if(!repMarker){
+      repMarker=new google.maps.Marker({position:{lat:last.lat,lng:last.lng},map:repMap,
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:11,fillColor:'#1D9E75',fillOpacity:1,strokeColor:'#fff',strokeWeight:2.5},zIndex:99});
+    }else repMarker.setPosition({lat:last.lat,lng:last.lng});
+    repMap.panTo({lat:last.lat,lng:last.lng});
+  }
+}
+function geocodeDest(name,cb){
+  if(!window.google||typeof GOOGLE_MAPS_API_KEY==='undefined'||GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){cb(null);return;}
+  new google.maps.Geocoder().geocode({address:name+', Philippines'},(res,status)=>{
+    if(status==='OK'&&res[0]){const l=res[0].geometry.location;cb({lat:l.lat(),lng:l.lng()});}else cb(null);
+  });
+}
+function addDestMarker(d,idx){
+  if(!repMap||!window.google||!d.lat)return;
+  destMarkers.push(new google.maps.Marker({
+    position:{lat:d.lat,lng:d.lng},map:repMap,
+    label:{text:String(idx+1),color:'#fff',fontSize:'11px',fontWeight:'bold'},
+    icon:{path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,scale:6,fillColor:'#E24B4A',fillOpacity:1,strokeColor:'#fff',strokeWeight:1.5},
+    title:d.name
+  }));
+}
+function clearDestMarkers(){destMarkers.forEach(m=>m.setMap(null));destMarkers=[];}
+
+// ─────────────────────────────────────────────────────────────
+//  GOOGLE MAPS — ADMIN
+// ─────────────────────────────────────────────────────────────
+function initAdminMap(){
+  if(adminMap)return;
+  loadGoogleMaps(()=>{
+    adminMap=new google.maps.Map(document.getElementById('admin-map'),{
+      center:{lat:10.35,lng:123.95},zoom:12,
+      mapTypeControl:true,streetViewControl:false,fullscreenControl:true,
+      mapTypeControlOptions:{position:google.maps.ControlPosition.TOP_RIGHT,style:google.maps.MapTypeControlStyle.DROPDOWN_MENU}
+    });
+    updateAdminMarkers();
+  });
+}
+function updateAdminMarkers(){
+  if(!adminMap||!window.google)return;
+  reps.forEach((r,i)=>{
+    const col=COLORS[i%COLORS.length];
+    const live=liveLocs[r.fbKey];
+    const isOn=!!live&&(Date.now()-live.t<300000);
+    if(mapFilter==='online'&&!isOn){if(admMarkers[r.fbKey])admMarkers[r.fbKey].setVisible(false);return;}
+    if(isOn&&live){
+      const pos={lat:live.lat,lng:live.lng};
+      if(!admMarkers[r.fbKey]){
+        admMarkers[r.fbKey]=new google.maps.Marker({position:pos,map:adminMap,
+          icon:{path:google.maps.SymbolPath.CIRCLE,scale:13,fillColor:col,fillOpacity:1,strokeColor:'#fff',strokeWeight:2.5},title:r.name,zIndex:20});
+        admInfoWins[r.fbKey]=new google.maps.InfoWindow();
+        admMarkers[r.fbKey].addListener('click',()=>{
+          const lv=liveLocs[r.fbKey];
+          admInfoWins[r.fbKey].setContent(`<div style="font-family:-apple-system,sans-serif;padding:4px;min-width:180px">
+            <b style="font-size:14px">${r.name}</b><br><span style="color:#5F5E5A;font-size:12px">${r.territory||''}</span>
+            ${lv?`<div style="font-size:11px;font-family:monospace;color:#888;margin-top:4px">${lv.lat.toFixed(5)}, ${lv.lng.toFixed(5)}</div>
+            <div style="font-size:11px;color:#1D9E75;font-weight:700;margin-top:2px">● Live · ${fAgo(lv.t)}</div>`:''}
+          </div>`);
+          admInfoWins[r.fbKey].open(adminMap,admMarkers[r.fbKey]);
+        });
+      }else{admMarkers[r.fbKey].setPosition(pos);admMarkers[r.fbKey].setVisible(true);}
+    }else{
+      if(admMarkers[r.fbKey])admMarkers[r.fbKey].setVisible(mapFilter==='all');
+    }
+    if(showTrails){
+      const ls=sessions.filter(s=>s.repId===r.fbKey&&s.trail&&s.trail.length>1).sort((a,b)=>b.loginTime.localeCompare(a.loginTime))[0];
+      if(ls){if(admPolylines[r.fbKey])admPolylines[r.fbKey].setMap(null);admPolylines[r.fbKey]=new google.maps.Polyline({path:ls.trail.map(p=>({lat:p.lat,lng:p.lng})),geodesic:true,strokeColor:col,strokeWeight:2.5,strokeOpacity:.55,map:adminMap});}
+    }else{if(admPolylines[r.fbKey]){admPolylines[r.fbKey].setMap(null);delete admPolylines[r.fbKey];}}
+  });
+}
+function loadGoogleMaps(cb){
+  if(window.google){cb();return;}
+  if(document.getElementById('gmap-scr')){window._gmCB=cb;return;}
+  if(typeof GOOGLE_MAPS_API_KEY==='undefined'||!GOOGLE_MAPS_API_KEY||GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){
+    ['rep-map','admin-map'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;padding:20px;text-align:center;color:#0C447C"><div style="font-size:32px">🗺️</div><div style="font-size:13px;font-weight:700">Add Google Maps API key in firebase-config.js</div></div>`;});
+    return;
+  }
+  window._gmCB=cb;
+  const s=document.createElement('script');s.id='gmap-scr';
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=_gmCB`;
+  s.async=true;s.defer=true;document.head.appendChild(s);
+}
+function fitAll(){
+  if(!adminMap||!window.google)return;
+  const b=new google.maps.LatLngBounds();let has=false;
+  Object.values(liveLocs).forEach(l=>{b.extend({lat:l.lat,lng:l.lng});has=true;});
+  if(has)Object.keys(liveLocs).length>1?adminMap.fitBounds(b,60):adminMap.panTo(b.getCenter());
+}
+function setMapFilter(f){
+  mapFilter=f;
+  document.querySelectorAll('.mcbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('mf-'+f).classList.add('on');
+  updateAdminMarkers();
+}
+function toggleTrails(){
+  showTrails=!showTrails;
+  const b=document.getElementById('mf-trail');b.textContent='Trails: '+(showTrails?'on':'off');b.classList.toggle('on',showTrails);
+  updateAdminMarkers();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  ADMIN RENDERS
+// ─────────────────────────────────────────────────────────────
+function renderAdminAll(){renderAdmMetrics();renderAdmReps();renderAdmFeed();renderAdmSess();}
+function renderAdmMetrics(){
+  const online=Object.keys(liveLocs).length;
+  const todayA=activities.filter(a=>a.date===today()).length;
+  const monthA=activities.filter(a=>isThisMonth(a.date)).length;
+  const rx=activities.filter(a=>a.outcome==='Prescription written').length;
+  document.getElementById('adm-metrics').innerHTML=`
+    <div class="am"><div class="am-l">Online now</div><div class="am-v" style="color:var(--teal)">${online}</div></div>
+    <div class="am"><div class="am-l">Today</div><div class="am-v">${todayA}</div></div>
+    <div class="am"><div class="am-l">This month</div><div class="am-v">${monthA}</div></div>
+    <div class="am"><div class="am-l">Prescriptions</div><div class="am-v">${rx}</div></div>`;
+  const oc=document.getElementById('online-count');if(oc)oc.textContent=online+' online';
+}
+function renderAdmReps(){
+  const el=document.getElementById('adm-reps');
+  if(!reps.length){el.innerHTML='<div class="empty">No reps yet.</div>';return;}
+  el.innerHTML=reps.map((r,i)=>{
+    const col=COLORS[i%COLORS.length];
+    const live=liveLocs[r.fbKey];const isOn=!!live&&(Date.now()-live.t<300000);
+    const v=activities.filter(a=>a.repId===r.fbKey&&isThisMonth(a.date)&&a.type==='visit').length;
+    const pct=Math.min(100,Math.round(v/(r.target||20)*100));
+    const pcol=pct>=100?'#1D9E75':pct>=60?col:'#E24B4A';
+    return`<div class="rcard ${isOn?'is-on':'is-off'}" onclick="focusRep('${r.fbKey}')">
+      <div class="rcard-top">
+        <div class="av" style="background:${col}22;color:${col};width:30px;height:30px;font-size:11px">${inits(r.name)}</div>
+        <div style="flex:1;min-width:0"><div class="rname">${r.name}</div><div style="font-size:11px;color:var(--text2)">${r.territory||''}</div></div>
+        <span class="badge ${isOn?'b-on':'b-off'}">${isOn?'Online':'Offline'}</span>
+      </div>
+      ${isOn&&live?`<div class="rcoords">${live.lat.toFixed(5)}, ${live.lng.toFixed(5)}</div><div class="rstale">${fAgo(live.t)}</div>`:''}
+      <div class="rdet">${v}/${r.target||20} visits</div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pcol}"></div></div>
+    </div>`;
+  }).join('');
+}
+function renderAdmFeed(){
+  const el=document.getElementById('adm-feed');
+  const s=[...activities].sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'')).slice(0,20);
+  el.innerHTML=s.length?s.map(a=>`<div class="fi"><div class="fi-t">${a.doctor} — ${a.product}</div><div class="fi-s">${repName(a.repId)} · ${a.date||''} · ${a.type} · ${a.outcome}</div></div>`).join(''):'<div class="empty">No activities.</div>';
+}
+function renderAdmSess(){
+  const el=document.getElementById('adm-sess');
+  const ts=sessions.filter(s=>s.loginTime&&s.loginTime.startsWith(today())).sort((a,b)=>b.loginTime.localeCompare(a.loginTime));
+  if(!ts.length){el.innerHTML='<div class="empty">No sessions today.</div>';return;}
+  el.innerHTML=`<table class="stbl"><thead><tr><th>Rep</th><th>Login</th><th>Dur</th><th>Pts</th><th>Status</th></tr></thead><tbody>
+    ${ts.map(s=>`<tr><td style="font-weight:700">${repName(s.repId)}</td><td>${fDT(s.loginTime)}</td>
+    <td>${s.logoutTime?fDur(new Date(s.logoutTime)-new Date(s.loginTime)):'Active'}</td>
+    <td>${s.trailCount||0}</td>
+    <td><span class="badge ${s.logoutTime?'b-off':'b-on'}">${s.logoutTime?'Done':'Live'}</span></td></tr>`).join('')}
+  </tbody></table>`;
+}
+function aTab(name){
+  document.querySelectorAll('.apanel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('ap-'+name).classList.add('on');
+  const labels={reps:'Reps',feed:'Feed',sess:'Sessions'};
+  document.querySelectorAll('.atab').forEach(b=>{if(b.textContent.trim()===labels[name])b.classList.add('on');});
+}
+function focusRep(fbKey){
+  const live=liveLocs[fbKey];
+  if(live&&adminMap&&window.google){adminMap.panTo({lat:live.lat,lng:live.lng});adminMap.setZoom(16);if(admMarkers[fbKey])google.maps.event.trigger(admMarkers[fbKey],'click');}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  GPS SESSION
+// ─────────────────────────────────────────────────────────────
+async function startSession(){
+  const repId=document.getElementById('gps-rep').value;
+  if(!repId){toast('Select a rep first.');return;}
+  if(sessions.find(s=>s.repId===repId&&!s.logoutTime)){toast('This rep is already logged in.');return;}
+  const sess={repId,loginTime:new Date().toISOString(),logoutTime:null,trail:[],trailCount:0};
+  if(fbReady&&db){const ref=await fbPush('sessions',sess);activeSession={...sess,fbKey:ref.key};liveRef=db.ref('live_locations/'+repId);}
+  else{activeSession={...sess,id:'s'+Date.now()};sessions.push(activeSession);}
+  trailPts=[];sessStart=Date.now();
+  document.getElementById('btn-login-gps').style.display='none';
+  document.getElementById('btn-logout-gps').style.display='';
+  document.getElementById('gpulse').classList.add('on');
+  startTimer();startGPS();toast(repName(repId)+' logged in.');
+}
+async function endSession(){
+  if(!activeSession)return;
+  stopGPS();clearInterval(timerInt);
+  const logoutTime=new Date().toISOString();
+  if(fbReady&&db&&activeSession.fbKey){
+    await fbUpdate('sessions/'+activeSession.fbKey,{logoutTime,trailCount:trailPts.length});
+    if(liveRef)await liveRef.remove();
+  }else{const s=sessions.find(x=>x.id===activeSession.id);if(s){s.logoutTime=logoutTime;s.trail=trailPts;}}
+  liveRef=null;
+  if(repMarker){repMarker.setMap(null);repMarker=null;}
+  if(repPolyline){repPolyline.setMap(null);repPolyline=null;}
+  activeSession=null;trailPts=[];
+  document.getElementById('btn-login-gps').style.display='';
+  document.getElementById('btn-logout-gps').style.display='none';
+  document.getElementById('gpulse').classList.remove('on');
+  document.getElementById('gps-info').textContent='Session ended and saved.';
+  document.getElementById('gps-timer').textContent='';
+  toast('Session saved!');renderSessions();
+}
+function startGPS(){
+  if(!navigator.geolocation){document.getElementById('gps-info').textContent='GPS not available.';return;}
+  document.getElementById('gps-info').textContent='Acquiring GPS signal…';
+  gpsWatchId=navigator.geolocation.watchPosition(async pos=>{
+    const pt={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:Math.round(pos.coords.accuracy),t:Date.now()};
+    trailPts.push(pt);
+    if(liveRef)await liveRef.set({lat:pt.lat,lng:pt.lng,acc:pt.acc,t:pt.t,repId:activeSession.repId,name:repName(activeSession.repId)});
+    if(fbReady&&db&&activeSession.fbKey&&trailPts.length%10===0)fbUpdate('sessions/'+activeSession.fbKey,{trailCount:trailPts.length,lastLat:pt.lat,lastLng:pt.lng});
+    document.getElementById('gps-info').textContent=`${repName(activeSession?.repId)} · ${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} ±${pt.acc}m · ${trailPts.length} pts`;
+    updateRepTrail();
+  },err=>{
+    const m={1:'Location permission denied.',2:'Position unavailable.',3:'GPS timed out.'};
+    document.getElementById('gps-info').textContent=m[err.code]||'GPS error.';
+  },{enableHighAccuracy:true,maximumAge:4000,timeout:20000});
+}
+function stopGPS(){if(gpsWatchId!==null){navigator.geolocation.clearWatch(gpsWatchId);gpsWatchId=null;}}
+function startTimer(){
+  clearInterval(timerInt);
+  timerInt=setInterval(()=>{
+    if(!sessStart)return;
+    const ms=Date.now()-sessStart;
+    const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
+    document.getElementById('gps-timer').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  },1000);
+}
+function renderSessions(){
+  const el=document.getElementById('r-sessions');
+  const s=[...sessions].sort((a,b)=>(b.loginTime||'').localeCompare(a.loginTime||'')).slice(0,10);
+  el.innerHTML=s.length?s.map(x=>`<div class="li"><div class="li-m">
+    <div class="li-t">${repName(x.repId)}${!x.logoutTime?' <span class="badge b-on">Live</span>':''}</div>
+    <div class="li-s">In: ${fDT(x.loginTime)}${x.logoutTime?' · Out: '+fDT(x.logoutTime):''}</div>
+  </div><div class="li-r">${x.logoutTime?fDur(new Date(x.logoutTime)-new Date(x.loginTime)):'Active'}<br><span style="color:var(--text3)">${x.trailCount||0} pts</span></div></div>`).join('')
+  :'<div class="empty">No sessions yet.</div>';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DESTINATIONS
+// ─────────────────────────────────────────────────────────────
+function todayDests(){return destinations.filter(d=>d.date===today());}
+function renderDestList(){
+  const list=todayDests();
+  const el=document.getElementById('dest-list');
+  const dc=document.getElementById('dest-count');
+  if(dc)dc.textContent=`${list.filter(d=>d.done).length}/${list.length} done`;
+  clearDestMarkers();
+  el.innerHTML=list.length?list.map((d,i)=>{
+    const bc=d.done?'dd':d.active?'da':'dp';
+    const bt=d.done?'Done':d.active?'En route':'Pending';
+    addDestMarker(d,i);
+    return`<div class="dest-item">
+      <div class="dest-num">${i+1}</div>
+      <div class="dest-txt">${d.name}</div>
+      <span class="dbadge ${bc}">${bt}</span>
+      <button class="btn-icon" onclick="toggleDest('${d.fbKey||d.id}')" style="width:28px;height:28px">
+        <svg viewBox="0 0 24 24"><path d="${d.done?'M18 6L6 18M6 6l12 12':'M20 6L9 17l-5-5'}"/></svg>
+      </button>
+      <button class="btn-icon" onclick="removeDest('${d.fbKey||d.id}')" style="width:28px;height:28px;color:#A32D2D">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>`;
+  }).join(''):'<div class="empty" style="padding:10px">No destinations for today</div>';
+}
+async function addDest(){
+  const inp=document.getElementById('dest-in');const name=inp.value.trim();if(!name)return;
+  inp.value='';
+  const d={name,date:today(),done:false,active:false,lat:null,lng:null,createdAt:new Date().toISOString()};
+  if(fbReady&&db){const ref=await fbPush('destinations',d);geocodeDest(name,c=>{if(c)fbUpdate('destinations/'+ref.key,{lat:c.lat,lng:c.lng});});}
+  else{d.id='d'+Date.now();destinations.push(d);geocodeDest(name,c=>{if(c){d.lat=c.lat;d.lng=c.lng;}renderDestList();});renderDestList();}
+  toast('Destination added.');
+}
+async function toggleDest(key){
+  const d=destinations.find(x=>x.fbKey===key||x.id===key);if(!d)return;
+  const nd=!d.done;
+  if(fbReady&&db)await fbUpdate('destinations/'+key,{done:nd,active:false});
+  else{d.done=nd;d.active=false;renderDestList();}
+}
+async function removeDest(key){
+  if(fbReady&&db)await fbRemove('destinations/'+key);
+  else{destinations=destinations.filter(x=>x.fbKey!==key&&x.id!==key);renderDestList();}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  REPS CRUD
+// ─────────────────────────────────────────────────────────────
+function populateRepSelects(){
+  ['gps-rep','f-rep','fil-rep','rep-sel'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const prev=el.value;const isFilter=(id==='fil-rep');const isLogin=(id==='rep-sel');
+    el.innerHTML=(isFilter?'<option value="">All reps</option>':isLogin?'<option value="">— Select your name —</option>':'');
+    reps.forEach(r=>{const o=document.createElement('option');o.value=r.fbKey||r.id;o.textContent=r.name;el.appendChild(o);});
+    if(prev)el.value=prev;
+  });
+}
+function renderRepsList(){
+  const el=document.getElementById('reps-list');
+  el.innerHTML=reps.length?reps.map(r=>`<div class="li">
+    <div class="av">${inits(r.name)}</div>
+    <div class="li-m"><div class="li-t">${r.name}</div><div class="li-s">${r.territory||''} · ${r.target||20}/mo</div></div>
+    <button class="btn-icon" onclick="deleteRep('${r.fbKey||r.id}')" style="color:#A32D2D">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+    </button>
+  </div>`).join(''):'<div class="empty">No reps added yet.</div>';
+}
+async function addRep(){
+  const name=document.getElementById('r-name').value.trim();
+  const territory=document.getElementById('r-terr').value.trim();
+  const target=parseInt(document.getElementById('r-target').value)||20;
+  if(!name){toast('Name is required.');return;}
+  const rep={name,territory,target,createdAt:new Date().toISOString()};
+  if(fbReady&&db)await fbPush('reps',rep);
+  else{reps.push({...rep,id:'r'+Date.now()});renderRepsList();populateRepSelects();}
+  document.getElementById('r-name').value='';document.getElementById('r-terr').value='';document.getElementById('r-target').value='';
+  toast(`${name} added!`);
+}
+async function deleteRep(key){
+  if(!confirm('Delete this rep and all their data?'))return;
+  if(fbReady&&db){
+    await fbRemove('reps/'+key);
+    await Promise.all(activities.filter(a=>a.repId===key).map(a=>fbRemove('activities/'+a.fbKey)));
+    await Promise.all(sessions.filter(s=>s.repId===key).map(s=>fbRemove('sessions/'+s.fbKey)));
+  }else{reps=reps.filter(r=>r.id!==key);activities=activities.filter(a=>a.repId!==key);sessions=sessions.filter(s=>s.repId!==key);renderRepsList();populateRepSelects();}
+  toast('Rep removed.');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  ACTIVITIES CRUD
+// ─────────────────────────────────────────────────────────────
+async function logActivity(){
+  const repId=document.getElementById('f-rep').value;const date=document.getElementById('f-date').value;
+  const type=document.getElementById('f-type').value;const doctor=document.getElementById('f-doctor').value.trim();
+  const product=document.getElementById('f-product').value.trim();const outcome=document.getElementById('f-outcome').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  if(!repId||!date||!doctor||!product){toast('Fill in all required fields.');return;}
+  const act={repId,date,type,doctor,product,outcome,notes,createdAt:new Date().toISOString()};
+  if(fbReady&&db)await fbPush('activities',act);
+  else{activities.push({...act,id:'a'+Date.now()});renderRepScreen();}
+  document.getElementById('f-doctor').value='';document.getElementById('f-product').value='';document.getElementById('f-notes').value='';
+  toast('Activity saved!');
+}
+async function deleteAct(key){
+  if(fbReady&&db)await fbRemove('activities/'+key);
+  else{activities=activities.filter(a=>a.id!==key);renderHistory();renderMetrics();}
+}
+function renderHistory(){
+  const fr=document.getElementById('fil-rep').value;const ft=document.getElementById('fil-type').value;
+  const fm=document.getElementById('fil-month').value;const fq=(document.getElementById('fil-q').value||'').toLowerCase();
+  let data=[...activities];
+  if(fr)data=data.filter(a=>a.repId===fr);if(ft)data=data.filter(a=>a.type===ft);
+  if(fm)data=data.filter(a=>a.date&&a.date.startsWith(fm));
+  if(fq)data=data.filter(a=>(a.doctor+a.product+(a.notes||'')+repName(a.repId)).toLowerCase().includes(fq));
+  data.sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
+  document.getElementById('hist-list').innerHTML=data.length?data.map(a=>`<div class="li"><div class="li-m">
+    <div class="li-t">${a.doctor} — ${a.product}</div>
+    <div class="li-s">${repName(a.repId)} · ${fDate(a.date)} · ${a.outcome}</div>
+  </div><div style="display:flex;align-items:center;gap:6px">${tBadge(a.type)}
+    <button class="btn-icon" onclick="deleteAct('${a.fbKey||a.id}')" style="color:#A32D2D">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+    </button></div></div>`).join(''):'<div class="empty">No matching activities.</div>';
+}
+function exportCSV(){
+  const rows=[['Date','Rep','Type','Doctor','Product','Outcome','Notes']];
+  [...activities].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(a=>rows.push([a.date,repName(a.repId),a.type,a.doctor,a.product,a.outcome,a.notes||'']));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='med_rep_activities.csv';a.click();URL.revokeObjectURL(url);
+  toast('CSV exported!');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SEED DEMO DATA (when Firebase not configured)
+// ─────────────────────────────────────────────────────────────
+function seedDemo(){
+  reps=[{id:'1',fbKey:'1',name:'Ana Santos',territory:'Cebu City',target:30},{id:'2',fbKey:'2',name:'Marco Reyes',territory:'Mandaue',target:25},{id:'3',fbKey:'3',name:'Liza Cruz',territory:'Lapu-Lapu',target:28}];
+  activities=[
+    {id:'a1',fbKey:'a1',repId:'1',date:'2026-07-10',type:'visit',doctor:'Dr. Tan',product:'Amoxil',outcome:'Prescription written',notes:''},
+    {id:'a2',fbKey:'a2',repId:'2',date:'2026-07-11',type:'call',doctor:'Dr. Lim',product:'Losartan',outcome:'Interested',notes:'Follow up next week'},
+    {id:'a3',fbKey:'a3',repId:'3',date:'2026-07-11',type:'meeting',doctor:'St. Luke Clinic',product:'Metformin',outcome:'Follow-up needed',notes:''},
+  ];
+  populateRepSelects();renderRepScreen();renderAdminAll();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+async function init(){
+  await loadBranding();
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('fil-month').value=new Date().toISOString().slice(0,7);
+  initFirebase();
+  // Seed demo data after a short delay if Firebase is not providing data
+  setTimeout(()=>{ if(!reps.length)seedDemo(); },2500);
+  // Handle admin.html shortcut redirect
+  const openAs=localStorage.getItem('medrep_open_as');
+  if(openAs==='admin'){
+    localStorage.removeItem('medrep_open_as');
+    // Pre-select admin role on the login screen
+    setRole('admin');
+  }
+}
+init();
+</script>
+</body>
+</html>

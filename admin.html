@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Med Rep Tracker</title>
+<style>body{margin:0;background:#0C447C;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,sans-serif;flex-direction:column;gap:16px}
+.msg{color:#fff;font-size:14px;opacity:.8}.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}</style>
+</head>
+<body>
+<div class="spinner"></div>
+<div class="msg">Opening Admin view…</div>
+<script>
+// Admin shortcut — opens app.html and auto-selects admin role via localStorage flag
+localStorage.setItem('medrep_open_as','admin');
+window.location.replace('./app.html');
+</script>
+</body></html>
