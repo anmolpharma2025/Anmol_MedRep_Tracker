@@ -233,6 +233,16 @@ body{display:flex;flex-direction:column}
 .toast{position:fixed;bottom:calc(72px + var(--sb));left:50%;transform:translateX(-50%) translateY(12px);background:#1a1a18;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:all .2s;pointer-events:none;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #screen-admin .toast{bottom:16px}
+.creds-section{margin-bottom:14px}
+.creds-section-title{font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px;padding:8px 0 4px;border-bottom:0.5px solid var(--border)}
+.creds-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.creds-row label{font-size:12px;color:var(--text-secondary);font-weight:500;width:70px;flex-shrink:0}
+.creds-row input{flex:1;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.creds-row input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+.creds-save-btn{width:100%;padding:9px;border-radius:var(--r);background:var(--blue);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:inherit;margin-top:4px}
+.creds-save-btn:active{opacity:.8}
+.creds-msg{font-size:12px;text-align:center;min-height:16px;margin-top:6px}
+.creds-note{background:var(--bg2);border-radius:var(--r);padding:8px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:10px}
 </style>
 </head>
 <body>
@@ -494,10 +504,15 @@ body{display:flex;flex-direction:column}
           <button class="atab on" onclick="aTab('reps')">Reps</button>
           <button class="atab" onclick="aTab('feed')">Feed</button>
           <button class="atab" onclick="aTab('sess')">Sessions</button>
+          <button class="atab" onclick="aTab('creds')"><i class="ti ti-settings" aria-hidden="true" style="font-size:13px;vertical-align:-1px"></i></button>
         </div>
         <div class="apanel on" id="ap-reps"><div class="ptitle">Field reps</div><div id="adm-reps"></div></div>
         <div class="apanel" id="ap-feed"><div class="ptitle">Recent activities</div><div id="adm-feed"></div></div>
         <div class="apanel" id="ap-sess"><div class="ptitle">Today's sessions</div><div id="adm-sess"></div></div>
+        <div class="apanel" id="ap-creds">
+          <div class="ptitle">Login credentials</div>
+          <div id="creds-panel"></div>
+        </div>
         <div class="upd" id="upd-time"></div>
       </div>
     </div>
@@ -569,6 +584,11 @@ function attachListeners(){
     const n=Object.keys(liveLocs).length;
     const oc=document.getElementById('online-count');if(oc)oc.textContent=n+' online';
     const upd=document.getElementById('upd-time');if(upd)upd.textContent='Updated '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  });
+  // Sync credentials from Firebase to localStorage
+  db.ref('settings/credentials').on('value',s=>{
+    const c=s.val();
+    if(c)localStorage.setItem('medrep_creds',JSON.stringify(c));
   });
   // also load branding from Firebase
   db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
@@ -935,6 +955,61 @@ function aTab(name){
   document.getElementById('ap-'+name).classList.add('on');
   const labels={reps:'Reps',feed:'Feed',sess:'Sessions'};
   document.querySelectorAll('.atab').forEach(b=>{if(b.textContent.trim()===labels[name])b.classList.add('on');});
+  // settings tab has icon not text
+  if(name==='creds'){
+    document.querySelectorAll('.atab')[3]?.classList.add('on');
+    renderCredsPanel();
+  }
+}
+
+function renderCredsPanel(){
+  const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
+  document.getElementById('creds-panel').innerHTML=`
+    <div class="creds-section">
+      <div class="creds-section-title"><i class="ti ti-user" aria-hidden="true" style="font-size:13px"></i> Med Rep login</div>
+      <div class="creds-row"><label>PIN</label><input type="text" id="rep-pin" maxlength="4" placeholder="4 digits" value="${creds.rep.pin}" inputmode="numeric"></div>
+      <div class="creds-row"><label>Password</label><input type="text" id="rep-pass" placeholder="password" value="${creds.rep.pass}"></div>
+    </div>
+    <div class="creds-section">
+      <div class="creds-section-title"><i class="ti ti-shield" aria-hidden="true" style="font-size:13px"></i> Admin login</div>
+      <div class="creds-row"><label>PIN</label><input type="text" id="adm-pin" maxlength="4" placeholder="4 digits" value="${creds.admin.pin}" inputmode="numeric"></div>
+      <div class="creds-row"><label>Password</label><input type="text" id="adm-pass" placeholder="password" value="${creds.admin.pass}"></div>
+    </div>
+    <button class="creds-save-btn" onclick="saveCredentials()">Save credentials</button>
+    <div class="creds-msg" id="creds-msg"></div>
+    <div class="creds-note">
+      <strong>PIN</strong> must be exactly 4 digits (numbers only).<br>
+      Changes take effect immediately on next login.<br>
+      Credentials are saved to this device and Firebase.
+    </div>`;
+}
+
+async function saveCredentials(){
+  const repPin=document.getElementById('rep-pin').value.trim();
+  const repPass=document.getElementById('rep-pass').value.trim();
+  const admPin=document.getElementById('adm-pin').value.trim();
+  const admPass=document.getElementById('adm-pass').value.trim();
+  const msg=document.getElementById('creds-msg');
+  // Validate PINs
+  if(!/^\d{4}$/.test(repPin)||!/^\d{4}$/.test(admPin)){
+    msg.style.color='var(--text-danger)';msg.textContent='PINs must be exactly 4 digits.';return;
+  }
+  if(!repPass||!admPass){
+    msg.style.color='var(--text-danger)';msg.textContent='Passwords cannot be empty.';return;
+  }
+  if(repPin===admPin&&repPass===admPass){
+    msg.style.color='var(--text-danger)';msg.textContent='Rep and Admin credentials must be different.';return;
+  }
+  const newCreds={rep:{pin:repPin,pass:repPass},admin:{pin:admPin,pass:admPass}};
+  // Save to localStorage
+  localStorage.setItem('medrep_creds',JSON.stringify(newCreds));
+  // Save to Firebase so all devices get updated credentials
+  if(fbReady&&db){
+    await fbSet('settings/credentials',newCreds);
+  }
+  msg.style.color='var(--text-success)';msg.textContent='Credentials saved successfully!';
+  setTimeout(()=>{if(msg)msg.textContent='';},3000);
+  toast('Login credentials updated!');
 }
 function focusRep(fbKey){
   const live=liveLocs[fbKey];
