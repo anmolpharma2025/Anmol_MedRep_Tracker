@@ -326,7 +326,6 @@ body{display:flex;flex-direction:column}
   </div>
 
   <div class="login-footer">
-    Default PIN: <strong>1234</strong> (Rep) · <strong>9999</strong> (Admin)<br>
     <span style="font-size:10px;opacity:.6">v4.0 · Firebase Edition</span>
   </div>
 </div>
@@ -501,10 +500,10 @@ body{display:flex;flex-direction:column}
       <div class="admin-inner">
         <div class="mg" id="adm-metrics"></div>
         <div class="atabs">
-          <button class="atab on" onclick="aTab('reps')">Reps</button>
-          <button class="atab" onclick="aTab('feed')">Feed</button>
-          <button class="atab" onclick="aTab('sess')">Sessions</button>
-          <button class="atab" onclick="aTab('creds')"><i class="ti ti-settings" aria-hidden="true" style="font-size:13px;vertical-align:-1px"></i></button>
+          <button class="atab on" data-tab="reps" onclick="aTab('reps')">Reps</button>
+          <button class="atab" data-tab="feed" onclick="aTab('feed')">Feed</button>
+          <button class="atab" data-tab="sess" onclick="aTab('sess')">Sessions</button>
+          <button class="atab" data-tab="creds" onclick="aTab('creds')"><i class="ti ti-settings" aria-hidden="true" style="font-size:13px;vertical-align:-1px"></i> Settings</button>
         </div>
         <div class="apanel on" id="ap-reps"><div class="ptitle">Field reps</div><div id="adm-reps"></div></div>
         <div class="apanel" id="ap-feed"><div class="ptitle">Recent activities</div><div id="adm-feed"></div></div>
@@ -953,13 +952,8 @@ function aTab(name){
   document.querySelectorAll('.apanel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.atab').forEach(b=>b.classList.remove('on'));
   document.getElementById('ap-'+name).classList.add('on');
-  const labels={reps:'Reps',feed:'Feed',sess:'Sessions'};
-  document.querySelectorAll('.atab').forEach(b=>{if(b.textContent.trim()===labels[name])b.classList.add('on');});
-  // settings tab has icon not text
-  if(name==='creds'){
-    document.querySelectorAll('.atab')[3]?.classList.add('on');
-    renderCredsPanel();
-  }
+  document.querySelector(`.atab[data-tab="${name}"]`)?.classList.add('on');
+  if(name==='creds')renderCredsPanel();
 }
 
 function renderCredsPanel(){
