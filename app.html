@@ -374,6 +374,23 @@ body{display:flex;flex-direction:column}
   </div>
 </div>
 
+<!-- Itinerary prompt modal -->
+<div class="modal-bg" id="itin-modal">
+  <div class="modal-box" style="max-width:340px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue-l);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-d)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </div>
+      <div>
+        <h3 style="margin-bottom:2px" id="itin-modal-title">Today's itinerary</h3>
+        <div style="font-size:12px;color:var(--text2)" id="itin-modal-date"></div>
+      </div>
+    </div>
+    <div id="itin-modal-body" style="margin-bottom:14px"></div>
+    <div class="modal-btns" id="itin-modal-btns"></div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════
      REP SCREEN
 ═══════════════════════════════════════════════════ -->
@@ -439,9 +456,12 @@ body{display:flex;flex-direction:column}
         <div class="field"><label>Product pitched</label>
           <select id="f-product-sel" onchange="onProductSelChange()" style="margin-bottom:4px"></select>
           <input type="text" id="f-product-manual" placeholder="Type product name" autocomplete="off" style="display:none;margin-bottom:6px">
-          <div id="f-product-save-row" style="display:none;align-items:center;gap:8px;padding:4px 0;cursor:pointer" onclick="document.getElementById('f-product-save-cb').click()">
-            <input type="checkbox" id="f-product-save-cb" style="width:16px;height:16px;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation()">
-            <span style="font-size:12px;color:var(--text2);user-select:none">Save this product to the list</span>
+          <div id="f-product-save-row" style="display:none;margin-top:6px">
+            <button type="button" id="f-product-save-btn" onclick="toggleSaveProduct()"
+              style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1.5px solid var(--border2);border-radius:var(--r);padding:8px 12px;width:100%;cursor:pointer;font-family:inherit;font-size:12px;color:var(--text2);text-align:left;transition:all .15s">
+              <span id="f-product-save-icon" style="width:18px;height:18px;border-radius:4px;border:2px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"></span>
+              <span>Save this product to the list</span>
+            </button>
           </div>
         </div>
         <div class="field"><label>Outcome</label>
@@ -1251,6 +1271,66 @@ async function startSession(){
   const repId=document.getElementById('gps-rep').value;
   if(!repId){toast('Select a rep first.');return;}
   if(sessions.find(s=>s.repId===repId&&!s.logoutTime)){toast('This rep is already logged in.');return;}
+
+  // Check today's itinerary for this rep
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStops=itineraries.filter(x=>x.date===todayStr&&(x.repId===repId||x.repId===loggedRepId));
+
+  if(todayStops.length>0){
+    // Has itinerary — show it as a summary before proceeding
+    showItinModal(repId,todayStops,true);
+  }else{
+    // No itinerary — prompt to set one or proceed anyway
+    showItinModal(repId,[],false);
+  }
+}
+
+function showItinModal(repId,stops,hasStops){
+  const d=new Date();
+  document.getElementById('itin-modal-date').textContent=d.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const body=document.getElementById('itin-modal-body');
+  const btns=document.getElementById('itin-modal-btns');
+  if(hasStops){
+    document.getElementById('itin-modal-title').textContent="Today's route — "+repName(repId);
+    body.innerHTML=`<div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;margin-bottom:4px">
+      ${stops.sort((a,b)=>(a.time||'').localeCompare(b.time||'')).map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px">
+        <div style="width:20px;height:20px;border-radius:50%;background:${s.done?'var(--teal)':'var(--blue)'};color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.done?'✓':i+1}</div>
+        <div style="flex:1;font-weight:500;color:var(--text)">${s.name}</div>
+        ${s.time?`<div style="font-size:11px;color:var(--text2)">${s.time}</div>`:''}
+      </div>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">${stops.length} stop${stops.length>1?'s':''} planned today.</div>`;
+    btns.innerHTML=`
+      <button class="mbtn-cancel" onclick="closeItinModal()">Cancel</button>
+      <button class="mbtn-save" onclick="closeItinModal();proceedStartSession('${repId}')">Start tracking</button>`;
+  }else{
+    document.getElementById('itin-modal-title').textContent='No itinerary set';
+    body.innerHTML=`<div style="text-align:center;padding:8px 0">
+      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6">You haven't set an itinerary for today.<br>Would you like to add your stops first?</div>
+    </div>`;
+    btns.innerHTML=`
+      <button class="mbtn-cancel" onclick="closeItinModal();goAddItin()">Add itinerary</button>
+      <button class="mbtn-save" onclick="closeItinModal();proceedStartSession('${repId}')">Continue anyway</button>`;
+  }
+  document.getElementById('itin-modal').classList.add('on');
+}
+
+function closeItinModal(){
+  document.getElementById('itin-modal').classList.remove('on');
+}
+
+function goAddItin(){
+  repGo('itin');
+  // pre-select today
+  itinWeekOffset=0;
+  const todayStr=new Date().toISOString().slice(0,10);
+  itinSelectedDay=todayStr;
+  setTimeout(()=>{renderItinDays();renderItinStops();},100);
+}
+
+async function proceedStartSession(repId){
   const sess={repId,loginTime:new Date().toISOString(),logoutTime:null,trail:[],trailCount:0};
   if(fbReady&&db){const ref=await fbPush('sessions',sess);activeSession={...sess,fbKey:ref.key};liveRef=db.ref('live_locations/'+repId);}
   else{activeSession={...sess,id:'s'+Date.now()};sessions.push(activeSession);}
@@ -1406,6 +1486,28 @@ async function deleteRep(key){
 // ─────────────────────────────────────────────────────────────
 //  ACTIVITIES CRUD
 // ─────────────────────────────────────────────────────────────
+let _saveProductChecked=false;
+function toggleSaveProduct(){
+  _saveProductChecked=!_saveProductChecked;
+  const btn=document.getElementById('f-product-save-btn');
+  const icon=document.getElementById('f-product-save-icon');
+  if(!btn||!icon)return;
+  if(_saveProductChecked){
+    btn.style.borderColor='var(--teal)';btn.style.color='var(--teal-d,#085041)';btn.style.background='var(--teal-l)';
+    icon.style.background='var(--teal)';icon.style.borderColor='var(--teal)';
+    icon.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  }else{
+    btn.style.borderColor='';btn.style.color='';btn.style.background='';
+    icon.style.background='transparent';icon.style.borderColor='';icon.innerHTML='';
+  }
+}
+function resetSaveProductToggle(){
+  _saveProductChecked=false;
+  const btn=document.getElementById('f-product-save-btn');
+  const icon=document.getElementById('f-product-save-icon');
+  if(btn){btn.style.borderColor='';btn.style.color='';btn.style.background='';}
+  if(icon){icon.style.background='transparent';icon.style.borderColor='';icon.innerHTML='';}
+}
 function onProductSelChange(){
   const sel=document.getElementById('f-product-sel');
   const mi=document.getElementById('f-product-manual');
@@ -1422,20 +1524,18 @@ async function logActivity(){
   const type=document.getElementById('f-type').value;const doctor=document.getElementById('f-doctor').value.trim();
   const sel=document.getElementById('f-product-sel');
   const manual=document.getElementById('f-product-manual');
-  const saveCb=document.getElementById('f-product-save-cb');
   const selVal=sel?sel.value:'';
   const product=(selVal===''||selVal==='__other__'?manual?.value:selVal||manual?.value||'').trim();
   const outcome=document.getElementById('f-outcome').value;
   const notes=document.getElementById('f-notes').value.trim();
   if(!repId||!date||!doctor||!product){toast('Fill in all required fields.');return;}
-  // Save to product list if checkbox ticked
-  if(saveCb&&saveCb.checked&&product){
+  // Save to product list if toggle is checked
+  if(_saveProductChecked&&product){
     const exists=products.find(p=>p.name.toLowerCase()===product.toLowerCase());
     if(!exists){
       const prod={name:product,category:'',createdAt:new Date().toISOString()};
       if(fbReady&&db){
         const ref=await fbPush('products',prod);
-        // also add locally so dropdown updates immediately without waiting for Firebase listener
         products.push({...prod,fbKey:ref.key});
         populateProductDropdown();
       }else{
@@ -1446,7 +1546,7 @@ async function logActivity(){
     }else{
       toast('"'+product+'" is already in the list.',2000);
     }
-    saveCb.checked=false;
+    resetSaveProductToggle();
   }
   const act={repId,date,type,doctor,product,outcome,notes,createdAt:new Date().toISOString()};
   if(fbReady&&db)await fbPush('activities',act);
@@ -1456,6 +1556,7 @@ async function logActivity(){
   if(manual){manual.value='';manual.style.display='none';}
   const sr=document.getElementById('f-product-save-row');
   if(sr)sr.style.display='none';
+  resetSaveProductToggle();
   document.getElementById('f-notes').value='';
   toast('Activity saved!');
 }
