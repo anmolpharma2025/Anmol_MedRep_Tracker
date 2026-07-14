@@ -93,6 +93,7 @@ body{display:flex;flex-direction:column}
 .login-btn:hover{opacity:.9}
 .login-btn:active{opacity:.75}
 .login-btn.admin-mode{background:var(--blue-d)}
+.login-btn.sysadmin-mode{background:#5F2C82;background:linear-gradient(135deg,#5F2C82,#49a09d)}
 .login-footer{padding:0 24px 18px;text-align:center;font-size:11px;color:var(--text3)}
 .login-footer strong{color:var(--text2)}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
@@ -355,6 +356,20 @@ body{display:flex;flex-direction:column}
 .chat-send-btn{width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
 .chat-send-btn:hover{opacity:.85}
 .chat-send-btn:active{opacity:.65}
+.chat-attach-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;border-radius:50%;transition:background .15s}
+.chat-attach-btn:hover{background:var(--bg2);color:var(--blue)}
+.chat-msg-actions{display:none;gap:4px;margin-top:3px}
+.chat-msg:hover .chat-msg-actions{display:flex}
+.chat-action-btn{font-size:10px;padding:2px 7px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-weight:600}
+.chat-edit-btn{background:var(--bg2);color:var(--text2)}.chat-edit-btn:hover{background:var(--blue-l);color:var(--blue)}
+.chat-del-btn{background:var(--red-l);color:var(--red)}.chat-del-btn:hover{background:var(--red);color:#fff}
+.chat-msg-deleted{font-style:italic;opacity:.4;font-size:12px}
+.chat-msg-edited{font-size:9px;opacity:.45;margin-left:4px}
+.chat-file-preview img{width:100%;max-width:180px;display:block;border-radius:8px;margin-top:4px;cursor:pointer}
+.chat-file-link{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(255,255,255,.15);border-radius:8px;font-size:11px;text-decoration:none;color:inherit;margin-top:4px;border:0.5px solid rgba(255,255,255,.25)}
+.chat-file-link.theirs{background:var(--bg2);color:var(--text);border-color:var(--border)}
+.chat-edit-input{width:100%;padding:5px 8px;border-radius:8px;border:1.5px solid var(--blue);font-size:13px;font-family:inherit;outline:none;background:rgba(255,255,255,.15);color:#fff;margin-top:4px;resize:none}
+.chat-edit-input.theirs-edit{background:var(--bg2);color:var(--text)}
 .chat-empty{text-align:center;padding:24px;color:var(--text3);font-size:13px;margin:auto}
 .chat-date-divider{text-align:center;font-size:10px;color:var(--text3);padding:4px 0;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .creds-section{margin-bottom:14px}
@@ -417,7 +432,7 @@ body{display:flex;flex-direction:column}
   </div>
 
   <div class="login-form">
-    <div class="role-row">
+    <div class="role-row" style="grid-template-columns:1fr 1fr 1fr">
       <button class="role-btn sel" id="rbtn-rep" onclick="setRole('rep')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         Med Rep <span class="role-lbl">Field</span>
@@ -425,6 +440,10 @@ body{display:flex;flex-direction:column}
       <button class="role-btn" id="rbtn-admin" onclick="setRole('admin')">
         <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
         Admin <span class="role-lbl">Manager</span>
+      </button>
+      <button class="role-btn" id="rbtn-sysadmin" onclick="setRole('sysadmin')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        System <span class="role-lbl">Super Admin</span>
       </button>
     </div>
 
@@ -847,6 +866,10 @@ body{display:flex;flex-direction:column}
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-input-row">
+      <label class="chat-attach-btn" title="Attach image/file">
+        <input type="file" id="chat-file-input" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="handleChatFile(event)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+      </label>
       <textarea class="chat-input" id="chat-input" placeholder="Type a message…" rows="1"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
@@ -867,7 +890,8 @@ body{display:flex;flex-direction:column}
 //  CONSTANTS & STATE
 // ─────────────────────────────────────────────────────────────
 const COLORS=['#185FA5','#1D9E75','#D85A30','#7F77DD','#BA7517','#993556','#0F6E56','#A32D2D'];
-const DEFAULT_CREDS={rep:{pin:'1234',pass:'rep123'},admin:{pin:'9999',pass:'admin123'}};
+const DEFAULT_CREDS={rep:{pin:'1234',pass:'rep123'},admin:{pin:'9999',pass:'admin123'},sysadmin:{pin:'0000',pass:'sysadmin123'}};
+const SYSTEM_ADMIN_KEY='sysadmin';
 
 let currentRole='rep', currentPIN='', authMode='pin';
 let loggedIn=false, loggedRole=null, loggedRepId=null, loggedRepName=null;
@@ -1012,13 +1036,15 @@ document.getElementById('name-modal').addEventListener('click',e=>{if(e.target==
 // ─────────────────────────────────────────────────────────────
 function setRole(r){
   currentRole=r;currentPIN='';updPinDots();clearErr();
-  document.getElementById('rbtn-rep').classList.toggle('sel',r==='rep');
-  document.getElementById('rbtn-admin').classList.toggle('sel',r==='admin');
+  ['rep','admin','sysadmin'].forEach(k=>{
+    const b=document.getElementById('rbtn-'+k);if(b)b.classList.toggle('sel',r===k);
+  });
   document.getElementById('rep-login-fields').style.display=r==='rep'?'':'none';
-  document.getElementById('admin-login-fields').style.display=r==='admin'?'':'none';
-  document.getElementById('login-btn').className='login-btn'+(r==='admin'?' admin-mode':'');
-  if(r==='rep')setTimeout(()=>document.getElementById('rep-username').focus(),80);
-  document.getElementById('pass-in')?document.getElementById('pass-in').value='':'';
+  document.getElementById('admin-login-fields').style.display=r!=='rep'?'':'none';
+  const cls={'admin':' admin-mode','sysadmin':' sysadmin-mode'};
+  document.getElementById('login-btn').className='login-btn'+(cls[r]||'');
+  if(r==='rep')setTimeout(()=>document.getElementById('rep-username')?.focus(),80);
+  const pi=document.getElementById('pass-in');if(pi)pi.value='';
 }
 function setAuthMode(m){
   authMode=m;currentPIN='';updPinDots();clearErr();
@@ -1065,15 +1091,17 @@ function doLogin(){
     loggedRepName=rep.name;
 
   } else {
-    // Admin: PIN or password
+    // Admin or Sysadmin: PIN or password
     const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
     const input=authMode==='pin'?currentPIN:document.getElementById('pass-in').value;
-    const expected=authMode==='pin'?creds.admin.pin:creds.admin.pass;
+    const roleKey=currentRole==='sysadmin'?'sysadmin':'admin';
+    const credSet=creds[roleKey]||DEFAULT_CREDS[roleKey];
+    const expected=authMode==='pin'?credSet.pin:credSet.pass;
     if(!input){showErr('Enter your '+(authMode==='pin'?'PIN':'password')+'.');return;}
     if(input!==expected){showErr('Incorrect '+(authMode==='pin'?'PIN':'password')+'. Try again.');return;}
-    loggedRole='admin';
+    loggedRole=currentRole; // 'admin' or 'sysadmin'
     loggedRepId=null;
-    loggedRepName='Admin';
+    loggedRepName=currentRole==='sysadmin'?'System Admin':'Admin';
   }
 
   loggedIn=true;
@@ -1081,9 +1109,8 @@ function doLogin(){
   btn.disabled=true;
   setTimeout(()=>{
     try{
-      loggedRole==='admin'?showAdmin():showRep();
+      loggedRole==='rep'?showRep():showAdmin();
     }catch(e){
-      // Reset button if something goes wrong
       btn.textContent='Sign In';btn.disabled=false;loggedIn=false;
       showErr('Login error. Please try again.');
     }
@@ -1116,6 +1143,9 @@ function showRep(){
 }
 function showAdmin(){
   showScreen('screen-admin');
+  // Update topbar title for sysadmin
+  const title=document.querySelector('#screen-admin .topbar-title');
+  if(title)title.textContent=loggedRole==='sysadmin'?'⚙ System Admin':'Admin — Live Map';
   renderAdminAll();
   setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);
   showChat();
@@ -1542,6 +1572,7 @@ function aTab(name){
 
 function renderCredsPanel(){
   const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
+  const isSys=loggedRole==='sysadmin';
   document.getElementById('creds-panel').innerHTML=`
     <div class="settings-block-title" style="margin-bottom:10px"><i class="ti ti-lock" aria-hidden="true"></i> Login credentials</div>
     <div class="creds-section">
@@ -1554,6 +1585,11 @@ function renderCredsPanel(){
       <div class="creds-row"><label>PIN</label><input type="text" id="adm-pin" maxlength="4" placeholder="4 digits" value="${creds.admin.pin}" inputmode="numeric"></div>
       <div class="creds-row"><label>Password</label><input type="text" id="adm-pass" placeholder="password" value="${creds.admin.pass}"></div>
     </div>
+    ${isSys?`<div class="creds-section" style="border:1.5px solid var(--red);border-radius:var(--r);padding:10px">
+      <div class="creds-section-title" style="color:var(--red)"><i class="ti ti-shield-lock" aria-hidden="true" style="font-size:13px"></i> System Admin credentials</div>
+      <div class="creds-row"><label>PIN</label><input type="text" id="sys-pin" maxlength="4" placeholder="4 digits" value="${(creds.sysadmin||DEFAULT_CREDS.sysadmin).pin}" inputmode="numeric"></div>
+      <div class="creds-row"><label>Password</label><input type="text" id="sys-pass" placeholder="password" value="${(creds.sysadmin||DEFAULT_CREDS.sysadmin).pass}"></div>
+    </div>`:''}
     <button class="creds-save-btn" onclick="saveCredentials()">Save credentials</button>
     <div class="creds-msg" id="creds-msg"></div>
     <div class="creds-note">PIN must be exactly 4 digits. Changes sync to all devices immediately.</div>`;
@@ -1563,6 +1599,7 @@ function renderCredsPanel(){
 
 function renderAdmRepsMini(){
   const el=document.getElementById('adm-reps-mini');if(!el)return;
+  const isSys=loggedRole==='sysadmin';
   if(!reps.length){el.innerHTML='<div class="empty" style="padding:8px">No reps yet.</div>';return;}
   el.innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Current reps</div>`+
   reps.map(r=>`<div style="background:var(--bg3);border-radius:var(--r);padding:8px 10px;margin-bottom:6px">
@@ -1571,6 +1608,7 @@ function renderAdmRepsMini(){
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:600;color:var(--text)">${r.name}</div>
         <div style="font-size:11px;color:var(--text2)">@${r.username||'no username'} · ${r.territory||''}</div>
+        ${isSys?`<div style="font-size:11px;color:var(--blue);font-family:monospace;margin-top:2px">🔑 ${r.password||'(not set)'}</div>`:''}
       </div>
       <button class="btn-icon" onclick="deleteRep('${r.fbKey||r.id}')" style="color:#A32D2D;width:26px;height:26px;padding:4px;flex-shrink:0">
         <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
@@ -1689,7 +1727,13 @@ async function saveCredentials(){
   if(repPin===admPin&&repPass===admPass){
     msg.style.color='var(--text-danger)';msg.textContent='Rep and Admin credentials must be different.';return;
   }
-  const newCreds={rep:{pin:repPin,pass:repPass},admin:{pin:admPin,pass:admPass}};
+  const newCreds={
+    rep:{pin:repPin,pass:repPass},
+    admin:{pin:admPin,pass:admPass},
+    sysadmin:loggedRole==='sysadmin'&&document.getElementById('sys-pin')
+      ?{pin:document.getElementById('sys-pin').value.trim(),pass:document.getElementById('sys-pass').value.trim()}
+      :(creds.sysadmin||DEFAULT_CREDS.sysadmin)
+  };
   // Save to localStorage
   localStorage.setItem('medrep_creds',JSON.stringify(newCreds));
   // Save to Firebase so all devices get updated credentials
@@ -2440,7 +2484,7 @@ function openRoom(roomId,roomName,roomType){
   const ref=db.ref('chat/'+roomId+'/messages').orderByChild('ts').limitToLast(60);
   chatListener=ref.on('value',s=>{
     const val=s.val();
-    const msgs=val?Object.values(val).sort((a,b)=>a.ts-b.ts):[];
+    const msgs=val?Object.entries(val).map(([k,v])=>({...v,_key:k})).sort((a,b)=>a.ts-b.ts):[];
     renderMessages(msgs);
   });
 }
@@ -2448,6 +2492,7 @@ function openRoom(roomId,roomName,roomType){
 function renderMessages(msgs){
   const el=document.getElementById('chat-messages');
   if(!msgs.length){el.innerHTML='<div class="chat-empty">No messages yet.<br>Say hello! 👋</div>';return;}
+  const canModAll=loggedRole==='sysadmin'; // sysadmin can delete/edit anyone's messages
   let html='',lastDate='';
   msgs.forEach(m=>{
     const d=new Date(m.ts);
@@ -2457,10 +2502,34 @@ function renderMessages(msgs){
       lastDate=dateStr;
     }
     const mine=m.senderId===chatUserId();
-    html+=`<div class="chat-msg ${mine?'mine':'theirs'}">
+    const canAct=mine||canModAll;
+    const msgKey=m._key||'';
+    // Message content
+    let bubbleContent='';
+    if(m.deleted){
+      bubbleContent=`<span class="chat-msg-deleted">Message deleted</span>`;
+    }else{
+      bubbleContent=escHtml(m.text||'');
+      if(m.edited)bubbleContent+=`<span class="chat-msg-edited">(edited)</span>`;
+      // File attachment
+      if(m.fileUrl){
+        if(m.fileType&&m.fileType.startsWith('image/')){
+          bubbleContent+=`<br><img class="chat-file-preview" src="${m.fileUrl}" alt="image" onclick="window.open('${m.fileUrl}','_blank')" style="max-width:180px;border-radius:8px;margin-top:4px;cursor:pointer">`;
+        }else{
+          bubbleContent+=`<br><a class="chat-file-link${mine?'':' theirs'}" href="${m.fileUrl}" target="_blank">📎 ${m.fileName||'File'}</a>`;
+        }
+      }
+    }
+    html+=`<div class="chat-msg ${mine?'mine':'theirs'}" data-key="${msgKey}">
       ${!mine?`<div class="chat-msg-sender">${m.sender}</div>`:''}
-      <div class="chat-msg-bubble">${escHtml(m.text)}</div>
-      <div class="chat-msg-time">${fChatTime(m.ts)}</div>
+      <div class="chat-msg-bubble">${bubbleContent}</div>
+      <div style="display:flex;align-items:center;gap:4px;justify-content:${mine?'flex-end':'flex-start'}">
+        <div class="chat-msg-time">${fChatTime(m.ts)}</div>
+        ${canAct&&!m.deleted&&msgKey?`<div class="chat-msg-actions">
+          ${mine||canModAll?`<button class="chat-action-btn chat-edit-btn" onclick="startEditMsg('${msgKey}','${mine?'mine':'theirs'}')">Edit</button>`:''}
+          <button class="chat-action-btn chat-del-btn" onclick="deleteMsg('${msgKey}')">Delete</button>
+        </div>`:''}
+      </div>
     </div>`;
   });
   el.innerHTML=html;
@@ -2468,6 +2537,62 @@ function renderMessages(msgs){
 }
 
 function escHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+async function handleChatFile(e){
+  const file=e.target.files[0];if(!file||!chatRoomId)return;
+  if(file.size>5*1024*1024){toast('File too large — max 5MB.');e.target.value='';return;}
+  if(!fbReady||!db){toast('Firebase not connected.');return;}
+  // Convert to base64 and store in Firebase (small files only; for large use Firebase Storage)
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const dataUrl=ev.target.result;
+    const msg={
+      text:'',sender:chatUserName(),senderId:chatUserId(),ts:Date.now(),
+      fileUrl:dataUrl,fileName:file.name,fileType:file.type
+    };
+    await db.ref('chat/'+chatRoomId+'/messages').push(msg);
+    await db.ref('chat/'+chatRoomId+'/meta').set({lastMsg:'📎 '+file.name,lastSender:chatUserName(),ts:Date.now()});
+    toast('File sent!');
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+
+async function deleteMsg(key){
+  if(!chatRoomId||!key)return;
+  if(!confirm('Delete this message?'))return;
+  await db.ref('chat/'+chatRoomId+'/messages/'+key).update({text:'',deleted:true,fileUrl:null,fileName:null});
+  toast('Message deleted.');
+}
+
+function startEditMsg(key,side){
+  // Find the bubble and replace with input
+  const msgEl=document.querySelector(`.chat-msg[data-key="${key}"]`);
+  if(!msgEl)return;
+  const bubble=msgEl.querySelector('.chat-msg-bubble');
+  const currentText=bubble.textContent.replace('(edited)','').trim();
+  bubble.innerHTML=`<textarea class="chat-edit-input${side==='theirs'?' theirs-edit':''}" id="edit-${key}" rows="1"
+    style="min-height:34px"
+    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveEditMsg('${key}')}"
+    >${currentText}</textarea>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <button onclick="saveEditMsg('${key}')" style="padding:4px 10px;border-radius:6px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700">Save</button>
+      <button onclick="cancelEditMsg('${key}')" style="padding:4px 10px;border-radius:6px;background:var(--bg2);color:var(--text2);border:none;cursor:pointer;font-size:12px">Cancel</button>
+    </div>`;
+  const ta=document.getElementById('edit-'+key);
+  if(ta){ta.focus();ta.selectionStart=ta.value.length;ta.style.height=ta.scrollHeight+'px';}
+}
+async function saveEditMsg(key){
+  const ta=document.getElementById('edit-'+key);
+  if(!ta)return;
+  const newText=ta.value.trim();
+  if(!newText){toast('Message cannot be empty.');return;}
+  await db.ref('chat/'+chatRoomId+'/messages/'+key).update({text:newText,edited:true});
+}
+function cancelEditMsg(key){
+  // Re-render by triggering listener (messages will re-render automatically)
+  toast('Edit cancelled.');
+}
 
 async function sendMessage(){
   const inp=document.getElementById('chat-input');
