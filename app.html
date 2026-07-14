@@ -190,6 +190,44 @@ body{display:flex;flex-direction:column}
 .gps-stop-num{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
 .gps-stop-name{flex:1;font-size:13px;color:var(--text);font-weight:500}
 .gps-stop-done .gps-stop-name{opacity:.5;text-decoration:line-through}
+/* Delivery-style bottom nav */
+.bottom-nav{display:flex;background:var(--bg);border-top:0.5px solid var(--border);padding:0 0 calc(var(--sb)) 0;position:sticky;bottom:0;z-index:200;align-items:flex-end}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;cursor:pointer;gap:2px;color:var(--text2);border:none;background:none;font-size:10px;font-weight:600;font-family:inherit;position:relative}
+.nav-item.active{color:var(--blue)}
+.nav-item svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-fab-wrap{flex:1;display:flex;justify-content:center;align-items:flex-end;padding-bottom:4px;position:relative}
+.nav-fab{width:58px;height:58px;border-radius:50%;background:var(--blue);color:#fff;border:3px solid var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(24,95,165,.5);position:relative;transition:transform .2s;margin-top:-18px}
+.nav-fab:hover{transform:scale(1.06)}
+.nav-fab:active{transform:scale(.94)}
+.nav-fab.tracking{background:var(--teal);box-shadow:0 4px 16px rgba(29,158,117,.5)}
+@keyframes fabpulse{0%,100%{box-shadow:0 4px 16px rgba(29,158,117,.5)}50%{box-shadow:0 4px 24px rgba(29,158,117,.9),0 0 0 8px rgba(29,158,117,.15)}}
+.nav-fab.tracking{animation:fabpulse 2s infinite}
+.nav-gps-badge{position:absolute;top:-2px;right:-2px;background:#E24B4A;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+/* Engage button */
+.engage-btn{width:100%;padding:14px;border-radius:var(--r);background:var(--teal);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;margin-top:8px}
+.engage-btn:active{opacity:.8}
+.engage-btn.engaged{background:var(--blue-d);opacity:.7;cursor:default}
+.engage-card{background:var(--teal-l);border:1.5px solid var(--teal);border-radius:var(--rl);padding:14px 16px;margin-bottom:10px}
+.engage-card-title{font-size:13px;font-weight:700;color:var(--teal-d);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.engage-card-sub{font-size:12px;color:var(--teal-d);opacity:.8}
+/* Report */
+.report-submitted{background:var(--teal-l);border:1px solid var(--teal);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--teal-d);display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.report-item{padding:10px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.report-item:last-child{border-bottom:none}
+.report-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.report-item-date{font-weight:700;color:var(--text)}
+.report-item-detail{font-size:12px;color:var(--text2);line-height:1.6}
+/* Logout timer warning */
+.logout-warn{background:var(--red-l);border:1px solid var(--red);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--red);display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600}
+.logout-warn button{margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+/* Google Places autocomplete dropdown style overrides */
+.pac-container{border-radius:var(--rl)!important;border:0.5px solid var(--border2)!important;box-shadow:0 4px 20px rgba(0,0,0,.15)!important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;margin-top:4px!important}
+.pac-item{padding:8px 14px!important;font-size:13px!important;cursor:pointer!important;border-top:0.5px solid var(--border)!important}
+.pac-item:first-child{border-top:none!important}
+.pac-item:hover,.pac-item-selected{background:var(--blue-l)!important}
+.pac-item-query{font-size:13px!important;font-weight:600!important;color:var(--text)!important}
+.pac-matched{color:var(--blue)!important}
+.pac-icon{display:none!important}
 #rep-map{width:100%;height:100%}
 .sess-ctl{display:flex;gap:8px;margin-bottom:12px}
 .sess-ctl .btn{flex:1;padding:12px}
@@ -511,7 +549,7 @@ body{display:flex;flex-direction:column}
             <div class="ptitle">Ad-hoc destinations</div>
             <div class="dest-list" id="dest-list" style="margin-top:6px"></div>
             <div class="dest-add" style="margin-top:6px">
-              <input type="text" id="dest-in" placeholder="Add destination…" autocomplete="off" onkeydown="if(event.key==='Enter')addDest()"
+              <input type="text" id="dest-in" placeholder="Add destination…" autocomplete="off"
                 style="flex:1;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
               <button class="btn-icon" onclick="addDest()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
             </div>
@@ -616,8 +654,7 @@ body{display:flex;flex-direction:column}
         <div id="itin-stops-list"></div>
         <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
           <input type="text" id="itin-stop-input" placeholder="Add stop (doctor, clinic...)" autocomplete="off"
-            style="flex:1;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none"
-            onkeydown="if(event.key==='Enter')addItinStop()">
+            style="flex:1;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
           <input type="time" id="itin-stop-time" value="08:00"
             style="width:90px;padding:10px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
           <button class="btn-icon" onclick="addItinStop()" title="Add stop" style="width:38px;height:38px;flex-shrink:0">
@@ -626,20 +663,62 @@ body{display:flex;flex-direction:column}
         </div>
       </div>
     </div>
+
+    <!-- Daily Report -->
+    <div class="page" id="pg-report">
+      <div class="card">
+        <div class="card-title">
+          Daily report
+          <span id="report-date-label" style="font-size:12px;color:var(--text2);font-weight:400"></span>
+        </div>
+        <div id="report-status-bar" style="margin-bottom:12px"></div>
+        <div class="field">
+          <label>Stops visited today</label>
+          <div id="report-stops-summary" style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--text2);min-height:48px;line-height:1.8"></div>
+        </div>
+        <div class="field">
+          <label>Activities logged today</label>
+          <div id="report-acts-summary" style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--text2);min-height:48px;line-height:1.8"></div>
+        </div>
+        <div class="field">
+          <label>Summary / highlights</label>
+          <textarea id="report-summary" placeholder="Key outcomes, doctor feedback, challenges, follow-ups needed…" style="height:90px;resize:vertical"></textarea>
+        </div>
+        <div class="field">
+          <label>Plan for tomorrow</label>
+          <textarea id="report-tomorrow" placeholder="What are you planning for tomorrow?" style="height:64px;resize:vertical"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Km travelled</label><input type="number" id="report-km" placeholder="e.g. 45" min="0" step="0.1"></div>
+          <div class="field"><label>Expenses (₱)</label><input type="number" id="report-expenses" placeholder="e.g. 500" min="0"></div>
+        </div>
+        <button class="btn btn-blue" onclick="submitDailyReport()">Submit Daily Report</button>
+        <p id="report-msg" style="font-size:12px;margin-top:8px;text-align:center;min-height:16px;color:var(--teal)"></p>
+      </div>
+      <div class="card">
+        <div class="card-title">Past reports</div>
+        <div id="past-reports-list"></div>
+      </div>
+    </div>
   </div>
 
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="repGo('dash')" id="nav-dash">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home
     </button>
-    <button class="nav-item" onclick="repGo('gps')" id="nav-gps">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/></svg>GPS
-    </button>
-    <button class="nav-item" onclick="repGo('log')" id="nav-log">
-      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log
-    </button>
     <button class="nav-item" onclick="repGo('itin')" id="nav-itin">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Plan
+    </button>
+    <!-- Center GPS FAB -->
+    <div class="nav-fab-wrap">
+      <button class="nav-fab" onclick="repGo('gps')" id="nav-gps" aria-label="GPS Tracker">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/></svg>
+        <span id="nav-gps-badge" class="nav-gps-badge" style="display:none"></span>
+      </button>
+    </div>
+    <button class="nav-item" onclick="repGo('report')" id="nav-report">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Report
+      <span id="nav-report-dot" style="display:none;width:6px;height:6px;background:#E24B4A;border-radius:50%;position:absolute;top:6px;right:calc(50% - 14px)"></span>
     </button>
     <button class="nav-item" onclick="repGo('hist')" id="nav-hist">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>History
@@ -679,11 +758,13 @@ body{display:flex;flex-direction:column}
           <button class="atab on" data-tab="reps" onclick="aTab('reps')">Reps</button>
           <button class="atab" data-tab="feed" onclick="aTab('feed')">Feed</button>
           <button class="atab" data-tab="sess" onclick="aTab('sess')">Sessions</button>
+          <button class="atab" data-tab="rpts" onclick="aTab('rpts')">Reports</button>
           <button class="atab" data-tab="creds" onclick="aTab('creds')"><i class="ti ti-settings" aria-hidden="true" style="font-size:13px;vertical-align:-1px"></i> Settings</button>
         </div>
         <div class="apanel on" id="ap-reps"><div class="ptitle">Field reps</div><div id="adm-reps"></div></div>
         <div class="apanel" id="ap-feed"><div class="ptitle">Recent activities</div><div id="adm-feed"></div></div>
         <div class="apanel" id="ap-sess"><div class="ptitle">Today's sessions</div><div id="adm-sess"></div></div>
+        <div class="apanel" id="ap-rpts"><div class="ptitle">Daily reports</div><div id="adm-reports"></div></div>
         <div class="apanel" id="ap-creds">
           <div class="ptitle">Settings</div>
 
@@ -839,6 +920,14 @@ function attachListeners(){
     if(document.getElementById('pg-itin')?.classList.contains('active'))renderItinDays();
     if(document.getElementById('pg-gps')?.classList.contains('active'))renderGpsItinStops();
   });
+  // Reports — admin sees all
+  db.ref('reports').on('value',s=>{
+    const all=Object.values(s.val()||{}).sort((a,b)=>b.date.localeCompare(a.date));
+    if(loggedRole==='rep')_reports=all.filter(r=>r.repId===loggedRepId);
+    else _reports=all;
+    checkReportDue();
+    if(document.getElementById('pg-report')?.classList.contains('active'))renderPastReports();
+  });
   // also load branding from Firebase
   db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
 }
@@ -965,8 +1054,9 @@ function showRep(){
   renderRepScreen();
   showChat();
   setTimeout(startChatUnreadListener,1000);
+  attachReportListener();
+  startKeepAlive();
 }
-function showAdmin(){
   showScreen('screen-admin');
   renderAdminAll();
   setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);
@@ -1010,11 +1100,26 @@ function repGo(tab){
   if(tab==='gps'){
     populateRepSelects();
     if(loggedRepId){const s=document.getElementById('gps-rep');if(s)s.value=loggedRepId;}
-    renderGpsItinStops();renderDestList();renderSessions();setTimeout(initRepMap,80);
+    renderGpsItinStops();renderDestList();renderSessions();
+    setTimeout(()=>{
+      initRepMap();
+      attachPlacesAC('dest-in',(name,lat,lng)=>{
+        const inp=document.getElementById('dest-in');
+        if(inp){inp.value=name;inp._acLat=lat;inp._acLng=lng;}
+      });
+    },80);
   }
   if(tab==='reps')renderRepsList();
   if(tab==='hist'){populateRepSelects();renderHistory();}
-  if(tab==='itin'){initItinerary();}
+  if(tab==='itin'){
+    initItinerary();
+    setTimeout(()=>{
+      attachPlacesAC('itin-stop-input',(name,lat,lng)=>{
+        const inp=document.getElementById('itin-stop-input');
+        if(inp){inp.value=name;inp._acLat=lat;inp._acLng=lng;}
+      });
+    },200);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1107,6 +1212,38 @@ function updateRepTrail(){
     repMap.panTo({lat:last.lat,lng:last.lng});
   }
 }
+// ── Google Places Autocomplete ─────────────────────────────
+const _acInstances={};
+function attachPlacesAC(inputId, onPlaceSelected){
+  // Attach Google Places Autocomplete to an input
+  // onPlaceSelected(name, lat, lng) — called when user picks a place
+  loadGoogleMaps(()=>{
+    const inp=document.getElementById(inputId);
+    if(!inp||!window.google||!window.google.maps.places)return;
+    if(_acInstances[inputId])return; // already attached
+    const ac=new google.maps.places.Autocomplete(inp,{
+      componentRestrictions:{country:'ph'},
+      fields:['name','geometry','formatted_address'],
+      types:['establishment','geocode']
+    });
+    _acInstances[inputId]=ac;
+    // Prevent form submit on Enter when dropdown is open
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
+    ac.addListener('place_changed',()=>{
+      const place=ac.getPlace();
+      if(!place||!place.geometry){
+        // User typed and pressed enter without selecting — use typed text
+        onPlaceSelected(inp.value.trim(),null,null);
+        return;
+      }
+      const name=place.name||(place.formatted_address||inp.value);
+      const lat=place.geometry.location.lat();
+      const lng=place.geometry.location.lng();
+      inp.value=name;
+      onPlaceSelected(name,lat,lng);
+    });
+  });
+}
 function geocodeDest(name,cb){
   if(!window.google||typeof GOOGLE_MAPS_API_KEY==='undefined'||GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){cb(null);return;}
   new google.maps.Geocoder().geocode({address:name+', Philippines'},(res,status)=>{
@@ -1171,15 +1308,26 @@ function updateAdminMarkers(){
   });
 }
 function loadGoogleMaps(cb){
-  if(window.google){cb();return;}
-  if(document.getElementById('gmap-scr')){window._gmCB=cb;return;}
+  if(window.google&&window.google.maps.places){cb();return;}
+  if(window.google&&!window.google.maps.places){
+    // places not loaded yet, load it
+    const s=document.createElement('script');
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=_gmCB`;
+    s.async=true;s.defer=true;window._gmCB=cb;document.head.appendChild(s);return;
+  }
+  if(document.getElementById('gmap-scr')){
+    // already loading — queue callback
+    const prev=window._gmCB;
+    window._gmCB=()=>{if(prev)prev();cb();};
+    return;
+  }
   if(typeof GOOGLE_MAPS_API_KEY==='undefined'||!GOOGLE_MAPS_API_KEY||GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){
     ['rep-map','admin-map'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;padding:20px;text-align:center;color:#0C447C"><div style="font-size:32px">🗺️</div><div style="font-size:13px;font-weight:700">Add Google Maps API key in firebase-config.js</div></div>`;});
     return;
   }
   window._gmCB=cb;
   const s=document.createElement('script');s.id='gmap-scr';
-  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=_gmCB`;
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=_gmCB`;
   s.async=true;s.defer=true;document.head.appendChild(s);
 }
 function fitAll(){
@@ -1253,12 +1401,30 @@ function renderAdmSess(){
     <td><span class="badge ${s.logoutTime?'b-off':'b-on'}">${s.logoutTime?'Done':'Live'}</span></td></tr>`).join('')}
   </tbody></table>`;
 }
+function renderAdmReports(){
+  const el=document.getElementById('adm-reports');if(!el)return;
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayRpts=_reports.filter(r=>r.date===todayStr);
+  const pending=reps.filter(r=>!todayRpts.find(rp=>rp.repId===(r.fbKey||r.id)));
+  el.innerHTML=`
+    <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Today — ${new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</div>
+    ${pending.length?`<div style="background:var(--red-l);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:8px;font-weight:600">⚠ Not yet submitted: ${pending.map(r=>r.name).join(', ')}</div>`:'<div style="background:var(--teal-l);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--teal-d);margin-bottom:8px;font-weight:600">✓ All reps submitted!</div>'}
+    ${todayRpts.map(r=>`<div class="report-item">
+      <div class="report-item-header"><span class="report-item-date">${r.repName||repName(r.repId)}</span><span style="font-size:10px;color:var(--teal);font-weight:600">✓ ${fDT(r.submittedAt)}</span></div>
+      <div class="report-item-detail">${r.summary?r.summary.slice(0,80)+'…':''}<br><span style="color:var(--text3)">${r.stopsEngaged||0}/${r.stopsTotal||0} stops · ${r.activitiesTotal||0} activities · ${r.km||0}km · ₱${Number(r.expenses||0).toLocaleString()}</span></div>
+    </div>`).join('')}
+    ${_reports.filter(r=>r.date!==todayStr).slice(0,8).map(r=>`<div class="report-item">
+      <div class="report-item-header"><span class="report-item-date">${r.repName||repName(r.repId)} · ${new Date(r.date+'T00:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</span></div>
+      <div class="report-item-detail">${r.summary?r.summary.slice(0,60)+'…':''}</div>
+    </div>`).join('')}`;
+}
 function aTab(name){
   document.querySelectorAll('.apanel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.atab').forEach(b=>b.classList.remove('on'));
-  document.getElementById('ap-'+name).classList.add('on');
+  document.getElementById('ap-'+name)?.classList.add('on');
   document.querySelector(`.atab[data-tab="${name}"]`)?.classList.add('on');
   if(name==='creds')renderCredsPanel();
+  if(name==='rpts')renderAdmReports();
 }
 
 function renderCredsPanel(){
@@ -1504,6 +1670,8 @@ async function proceedStartSession(repId){
 }
 async function endSession(){
   if(!activeSession)return;
+  // Block logout if daily report not submitted
+  if(blockLogoutIfNoReport())return;
   stopGPS();clearInterval(timerInt);
   const logoutTime=new Date().toISOString();
   if(fbReady&&db&&activeSession.fbKey){
@@ -1553,21 +1721,33 @@ function startTimer(){
 function renderGpsItinStops(){
   const el=document.getElementById('gps-itin-stops');if(!el)return;
   const todayStr=new Date().toISOString().slice(0,10);
-  const repId=loggedRepId;
-  const stops=itineraries.filter(x=>x.date===todayStr&&(x.repId===repId)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const stops=itineraries.filter(x=>x.date===todayStr&&x.repId===loggedRepId).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   if(!stops.length){
-    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0 8px">No itinerary set for today. <span style="color:var(--blue);cursor:pointer;text-decoration:underline" onclick="repGo(\'itin\')">Add stops →</span></div>';
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0 8px">No itinerary set for today. <span style="color:var(--blue);cursor:pointer;text-decoration:underline" onclick="repGo(\'itin\')">Add stops \u2192</span></div>';
     return;
   }
-  el.innerHTML=stops.map((s,i)=>`
-    <div class="gps-stop-item${s.done?' gps-stop-done':''}">
-      <div class="gps-stop-num" style="background:${s.done?'var(--teal)':'var(--blue)'}">${s.done?'✓':i+1}</div>
-      <div class="gps-stop-name">${s.name}</div>
-      ${s.time?`<div style="font-size:11px;color:var(--text3)">${s.time}</div>`:''}
-      <button class="btn-icon" onclick="toggleItinStop('${s.fbKey||s.id}')" style="width:26px;height:26px;color:${s.done?'var(--teal)':'var(--text3)'}">
-        <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round"><path d="M20 6L9 17l-5-5"/></svg>
-      </button>
-    </div>`).join('');
+  const nextStop=stops.find(s=>!s.engaged&&!s.done);
+  let html='';
+  stops.forEach((s,i)=>{
+    const key=s.fbKey||s.id;
+    const isNext=nextStop&&(nextStop.fbKey||nextStop.id)===key;
+    const done=s.engaged||s.done;
+    if(isNext){
+      html+=`<div class="engage-card">
+        <div class="engage-card-title"><span style="background:var(--teal);color:#fff;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-right:4px">${i+1}</span>Current stop</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin:4px 0">${s.name}</div>
+        ${s.time?`<div class="engage-card-sub">Scheduled: ${s.time}</div>`:''}
+        <button class="engage-btn${done?' engaged':''}" onclick="${done?'':'engageStop(\''+key+'\')'}">${done?'\u2713 Arrived &amp; Engaged':'\uD83D\uDCCD I have arrived \u2014 Engage'}</button>
+      </div>`;
+    }else{
+      html+=`<div class="gps-stop-item${done?' gps-stop-done':''}">
+        <div class="gps-stop-num" style="background:${done?'var(--teal)':'var(--gray)'}">${done?'\u2713':i+1}</div>
+        <div class="gps-stop-name">${s.name}</div>
+        ${s.time?`<div style="font-size:11px;color:var(--text3)">${s.time}</div>`:''}
+      </div>`;
+    }
+  });
+  el.innerHTML=html;
 }
 function renderSessions(){
   const el=document.getElementById('r-sessions');
@@ -1607,11 +1787,21 @@ function renderDestList(){
   }).join(''):'<div class="empty" style="padding:10px">No destinations for today</div>';
 }
 async function addDest(){
-  const inp=document.getElementById('dest-in');const name=inp.value.trim();if(!name)return;
-  inp.value='';
-  const d={name,date:today(),done:false,active:false,lat:null,lng:null,createdAt:new Date().toISOString()};
-  if(fbReady&&db){const ref=await fbPush('destinations',d);geocodeDest(name,c=>{if(c)fbUpdate('destinations/'+ref.key,{lat:c.lat,lng:c.lng});});}
-  else{d.id='d'+Date.now();destinations.push(d);geocodeDest(name,c=>{if(c){d.lat=c.lat;d.lng=c.lng;}renderDestList();});renderDestList();}
+  const inp=document.getElementById('dest-in');
+  const name=inp.value.trim();if(!name)return;
+  // Use cached coords from Places AC selection if available
+  const lat=inp._acLat||null, lng=inp._acLng||null;
+  inp.value='';inp._acLat=null;inp._acLng=null;
+  const d={name,date:today(),done:false,active:false,lat,lng,createdAt:new Date().toISOString()};
+  if(fbReady&&db){
+    const ref=await fbPush('destinations',d);
+    // If no coords yet, geocode as fallback
+    if(!lat)geocodeDest(name,c=>{if(c)fbUpdate('destinations/'+ref.key,{lat:c.lat,lng:c.lng});});
+  }else{
+    d.id='d'+Date.now();destinations.push(d);
+    if(!lat)geocodeDest(name,c=>{if(c){d.lat=c.lat;d.lng=c.lng;}renderDestList();});
+    renderDestList();
+  }
   toast('Destination added.');
 }
 async function toggleDest(key){
@@ -1913,15 +2103,17 @@ async function addItinStop(){
   const name=nameEl.value.trim();
   if(!name){toast('Enter a stop name.');return;}
   if(!itinSelectedDay){toast('Select a day first.');return;}
-  const stop={name,time:timeEl.value||'',date:itinSelectedDay,repId:loggedRepId,done:false,lat:null,lng:null,createdAt:new Date().toISOString()};
+  // Use cached coords from Places AC selection if available
+  const lat=nameEl._acLat||null, lng=nameEl._acLng||null;
+  nameEl._acLat=null;nameEl._acLng=null;
+  const stop={name,time:timeEl.value||'',date:itinSelectedDay,repId:loggedRepId,done:false,lat,lng,createdAt:new Date().toISOString()};
   if(fbReady&&db){
     const ref=await fbPush('itineraries',stop);
-    // Try geocode in background
-    geocodeDest(name,coords=>{if(coords)fbUpdate('itineraries/'+ref.key,{lat:coords.lat,lng:coords.lng});});
+    if(!lat)geocodeDest(name,coords=>{if(coords)fbUpdate('itineraries/'+ref.key,{lat:coords.lat,lng:coords.lng});});
   }else{
     stop.id='it'+Date.now();
     itineraries.push(stop);
-    geocodeDest(name,coords=>{if(coords){stop.lat=coords.lat;stop.lng=coords.lng;}renderItinStops();renderItinMap();});
+    if(!lat)geocodeDest(name,coords=>{if(coords){stop.lat=coords.lat;stop.lng=coords.lng;}renderItinStops();renderItinMap();});
     renderItinStops();
   }
   nameEl.value='';
@@ -2185,6 +2377,175 @@ function startChatUnreadListener(){
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+//  ENGAGE STOP
+// ─────────────────────────────────────────────────────────────
+async function engageStop(key){
+  const s=itineraries.find(x=>x.fbKey===key||x.id===key);if(!s)return;
+  const engagedAt=new Date().toISOString();
+  const loc=trailPts.length?trailPts[trailPts.length-1]:null;
+  const update={engaged:true,done:true,engagedAt,engagedLat:loc?.lat||null,engagedLng:loc?.lng||null};
+  if(fbReady&&db)await fbUpdate('itineraries/'+key,update);
+  else{Object.assign(s,update);renderGpsItinStops();renderItinStops();}
+  toast('✓ Engaged at '+s.name+'!',3000);
+  // Check if all done — prompt report
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStops=itineraries.filter(x=>x.date===todayStr&&x.repId===loggedRepId);
+  const allDone=todayStops.length>0&&todayStops.every(x=>x.engaged||x.done);
+  if(allDone)setTimeout(()=>{
+    if(confirm('All stops completed! Would you like to submit your daily report now?'))repGo('report');
+  },800);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DAILY REPORT
+// ─────────────────────────────────────────────────────────────
+let _reports=[];
+function attachReportListener(){
+  if(!fbReady||!db)return;
+  db.ref('reports').orderByChild('repId').equalTo(loggedRepId).on('value',s=>{
+    _reports=Object.values(s.val()||{}).sort((a,b)=>b.date.localeCompare(a.date));
+    if(document.getElementById('pg-report')?.classList.contains('active'))renderPastReports();
+    checkReportDue();
+  });
+}
+function checkReportDue(){
+  // Show red dot on Report tab if today's report not submitted
+  const todayStr=new Date().toISOString().slice(0,10);
+  const submitted=_reports.find(r=>r.date===todayStr&&r.repId===loggedRepId);
+  const dot=document.getElementById('nav-report-dot');
+  if(dot)dot.style.display=submitted?'none':'inline-block';
+}
+function initReportPage(){
+  const todayStr=new Date().toISOString().slice(0,10);
+  document.getElementById('report-date-label').textContent=new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  // Check if already submitted today
+  const submitted=_reports.find(r=>r.date===todayStr);
+  const statusEl=document.getElementById('report-status-bar');
+  if(submitted){
+    statusEl.innerHTML=`<div class="report-submitted"><span style="font-size:18px">✅</span> Report submitted at ${fDT(submitted.submittedAt||submitted.date)}</div>`;
+  }else{
+    statusEl.innerHTML=`<div class="logout-warn"><span>⚠</span> Report not yet submitted for today<button onclick="repGo('report')">Submit now</button></div>`;
+  }
+  // Auto-fill stops summary
+  const todayStops=itineraries.filter(x=>x.date===todayStr&&x.repId===loggedRepId);
+  const stopEl=document.getElementById('report-stops-summary');
+  if(todayStops.length){
+    stopEl.innerHTML=todayStops.map((s,i)=>`<div>${i+1}. ${s.name} ${s.engaged?'<span style="color:var(--teal);font-weight:700">✓ Engaged</span>':'<span style="color:var(--text3)">Not visited</span>'}</div>`).join('');
+  }else{stopEl.innerHTML='<span style="color:var(--text3)">No itinerary stops set for today</span>';}
+  // Auto-fill activities
+  const todayActs=activities.filter(a=>a.date===todayStr&&a.repId===loggedRepId);
+  const actEl=document.getElementById('report-acts-summary');
+  if(todayActs.length){
+    actEl.innerHTML=todayActs.map(a=>`<div>• ${a.doctor} — ${a.product} (${a.outcome})</div>`).join('');
+  }else{actEl.innerHTML='<span style="color:var(--text3)">No activities logged today</span>';}
+  // Pre-fill if draft saved
+  const draft=JSON.parse(localStorage.getItem('report_draft_'+loggedRepId+'_'+todayStr)||'null');
+  if(draft&&!submitted){
+    document.getElementById('report-summary').value=draft.summary||'';
+    document.getElementById('report-tomorrow').value=draft.tomorrow||'';
+    document.getElementById('report-km').value=draft.km||'';
+    document.getElementById('report-expenses').value=draft.expenses||'';
+  }
+  if(submitted){
+    // Show submitted values, disable form
+    document.getElementById('report-summary').value=submitted.summary||'';
+    document.getElementById('report-tomorrow').value=submitted.tomorrow||'';
+    document.getElementById('report-km').value=submitted.km||'';
+    document.getElementById('report-expenses').value=submitted.expenses||'';
+    ['report-summary','report-tomorrow','report-km','report-expenses'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.disabled=true;
+    });
+    document.querySelector('.btn.btn-blue[onclick="submitDailyReport()"]').disabled=true;
+  }else{
+    ['report-summary','report-tomorrow','report-km','report-expenses'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.disabled=false;
+    });
+    const btn=document.querySelector('.btn.btn-blue[onclick="submitDailyReport()"]');
+    if(btn)btn.disabled=false;
+  }
+  renderPastReports();
+  // Auto-save draft on input
+  ['report-summary','report-tomorrow','report-km','report-expenses'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.oninput=()=>{
+      const d={summary:document.getElementById('report-summary').value,tomorrow:document.getElementById('report-tomorrow').value,km:document.getElementById('report-km').value,expenses:document.getElementById('report-expenses').value};
+      localStorage.setItem('report_draft_'+loggedRepId+'_'+todayStr,JSON.stringify(d));
+    };
+  });
+}
+function renderPastReports(){
+  const el=document.getElementById('past-reports-list');if(!el)return;
+  const todayStr=new Date().toISOString().slice(0,10);
+  const past=_reports.filter(r=>r.date!==todayStr).slice(0,10);
+  if(!past.length){el.innerHTML='<div class="empty">No past reports yet.</div>';return;}
+  el.innerHTML=past.map(r=>`<div class="report-item">
+    <div class="report-item-header">
+      <span class="report-item-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'})}</span>
+      <span style="font-size:11px;color:var(--teal);font-weight:600">✓ Submitted</span>
+    </div>
+    <div class="report-item-detail">
+      ${r.summary?`<div>${r.summary.slice(0,100)}${r.summary.length>100?'…':''}</div>`:''}
+      <div style="margin-top:3px;color:var(--text3)">${r.km?r.km+' km · ':''} ${r.expenses?'₱'+Number(r.expenses).toLocaleString():''}</div>
+    </div>
+  </div>`).join('');
+}
+async function submitDailyReport(){
+  const summary=document.getElementById('report-summary').value.trim();
+  const tomorrow=document.getElementById('report-tomorrow').value.trim();
+  const km=document.getElementById('report-km').value;
+  const expenses=document.getElementById('report-expenses').value;
+  if(!summary){document.getElementById('report-msg').style.color='var(--red)';document.getElementById('report-msg').textContent='Please write a summary before submitting.';return;}
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStops=itineraries.filter(x=>x.date===todayStr&&x.repId===loggedRepId);
+  const todayActs=activities.filter(a=>a.date===todayStr&&a.repId===loggedRepId);
+  const report={repId:loggedRepId,repName:loggedRepName,date:todayStr,submittedAt:new Date().toISOString(),summary,tomorrow,km:km||0,expenses:expenses||0,stopsTotal:todayStops.length,stopsEngaged:todayStops.filter(s=>s.engaged||s.done).length,activitiesTotal:todayActs.length};
+  if(fbReady&&db){
+    await fbPush('reports',report);
+  }else{_reports.unshift({...report,id:'rpt'+Date.now()});}
+  // Clear draft
+  localStorage.removeItem('report_draft_'+loggedRepId+'_'+todayStr);
+  document.getElementById('report-msg').style.color='var(--teal)';
+  document.getElementById('report-msg').textContent='✓ Report submitted successfully!';
+  checkReportDue();
+  toast('Daily report submitted!',3000);
+  setTimeout(()=>initReportPage(),500);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SESSION KEEP-ALIVE (block timeout if no report submitted)
+// ─────────────────────────────────────────────────────────────
+let _keepAliveInt=null;
+function startKeepAlive(){
+  clearInterval(_keepAliveInt);
+  _keepAliveInt=setInterval(()=>{
+    const todayStr=new Date().toISOString().slice(0,10);
+    const submitted=_reports.find(r=>r.date===todayStr&&r.repId===loggedRepId);
+    if(!submitted&&activeSession){
+      // Show warning banner on GPS tab if report not done and session has been running >6h
+      const hours=(Date.now()-new Date(activeSession.loginTime).getTime())/3600000;
+      if(hours>=6){
+        const gpsInfo=document.getElementById('gps-info');
+        if(gpsInfo&&!gpsInfo.textContent.includes('report')){
+          toast('⚠ Please submit your daily report before logging out!',4000);
+        }
+      }
+    }
+    // Refresh GPS badge
+    const fab=document.getElementById('nav-gps');
+    if(fab)fab.classList.toggle('tracking',!!activeSession);
+  },60000); // check every minute
+}
+function blockLogoutIfNoReport(){
+  const todayStr=new Date().toISOString().slice(0,10);
+  const submitted=_reports.find(r=>r.date===todayStr&&r.repId===loggedRepId);
+  if(!submitted){
+    toast('⚠ Submit your daily report before logging out!',4000);
+    setTimeout(()=>repGo('report'),1500);
+    return true; // blocked
+  }
+  return false;
+}
 async function init(){
   await loadBranding();
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
