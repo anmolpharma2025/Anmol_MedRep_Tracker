@@ -36,8 +36,8 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
 body{display:flex;flex-direction:column}
 
 /* ── Screen system ─────────────────────────────────── */
-.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
-.screen.active{display:flex}
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden;pointer-events:none}
+.screen.active{display:flex;pointer-events:auto}
 
 /* ══════════════════════════════════════════════════════
    LOGIN SCREEN
@@ -65,8 +65,8 @@ body{display:flex;flex-direction:column}
 /* Form */
 .login-form{padding:24px 24px 20px}
 .role-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
-.role-btn{padding:11px 8px;border-radius:var(--r);border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s}
-.role-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.role-btn{padding:14px 8px;border-radius:var(--r);border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s;position:relative;z-index:1;-webkit-tap-highlight-color:rgba(24,95,165,.15)}
+.role-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .role-btn .role-lbl{font-size:10px;font-weight:600;opacity:.7}
 .role-btn.sel{border-color:var(--blue);background:var(--blue-l);color:var(--blue-d)}
 .lfield{margin-bottom:12px}
@@ -132,7 +132,6 @@ body{display:flex;flex-direction:column}
 #screen-rep .main-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .page{display:none;padding:14px;padding-bottom:22px}
 .page.active{display:block}
-.bottom-nav{display:flex;background:var(--bg);border-top:0.5px solid var(--border);padding-bottom:calc(var(--sb));flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:7px 4px 5px;cursor:pointer;gap:2px;color:var(--text2);border:none;background:none;font-size:10px;font-weight:600;font-family:inherit}
 .nav-item.active{color:var(--blue)}
 .nav-item svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -457,6 +456,7 @@ body{display:flex;flex-direction:column}
     </div>
 
     <div class="err-box" id="err-box"></div>
+    <div id="fb-login-status" style="font-size:11px;text-align:center;color:var(--text3);margin-bottom:8px;min-height:14px"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
   </div>
 
@@ -890,6 +890,13 @@ function initFirebase(){
 function setFbStatus(ok,txt){
   ['rep-fb-dot','adm-fb-dot'].forEach(id=>{const el=document.getElementById(id);if(el)el.className='fb-dot'+(ok?' ok':'');});
   ['rep-fb-st','adm-fb-st'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=txt;});
+  // Show on login screen
+  const ls=document.getElementById('fb-login-status');
+  if(ls){
+    if(ok){ls.textContent='🟢 Connected';ls.style.color='rgba(29,158,117,0.9)';}
+    else if(txt==='Not configured'){ls.textContent='⚠ Firebase not configured — demo mode';ls.style.color='rgba(186,117,23,0.9)';}
+    else{ls.textContent='⏳ Connecting to server…';ls.style.color='rgba(255,255,255,0.5)';}
+  }
 }
 function attachListeners(){
   db.ref('reps').on('value',s=>{reps=objArr(s.val());populateRepSelects();renderRepScreen();renderAdminAll();renderAdmRepsMini();});
@@ -1008,13 +1015,27 @@ function doLogin(){
     const password=document.getElementById('rep-passw').value;
     if(!username){showErr('Enter your username.');return;}
     if(!password){showErr('Enter your password.');return;}
+
+    // If reps haven't loaded from Firebase yet
+    if(!reps.length){
+      showErr('Still connecting to server… please wait a moment and try again.');return;
+    }
+
     // Find rep by username (case-insensitive)
     const rep=reps.find(r=>r.username&&r.username.toLowerCase()===username.toLowerCase());
-    if(!rep){showErr('Username not found. Contact your admin.');return;}
+    if(!rep){
+      // Check if any reps have no username (old data) — help admin
+      const noUserReps=reps.filter(r=>!r.username);
+      if(noUserReps.length)showErr('Username not found. Ask admin to set your username in Settings.');
+      else showErr('Username not found. Check spelling or contact your admin.');
+      return;
+    }
+    if(!rep.password){showErr('No password set for this account. Contact your admin.');return;}
     if(rep.password!==password){showErr('Incorrect password. Try again.');return;}
     loggedRole='rep';
     loggedRepId=rep.fbKey||rep.id;
     loggedRepName=rep.name;
+
   } else {
     // Admin: PIN or password
     const creds=JSON.parse(localStorage.getItem('medrep_creds')||'null')||DEFAULT_CREDS;
@@ -1030,7 +1051,15 @@ function doLogin(){
   loggedIn=true;
   btn.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle"></span>Signing in…';
   btn.disabled=true;
-  setTimeout(()=>{loggedRole==='admin'?showAdmin():showRep();},500);
+  setTimeout(()=>{
+    try{
+      loggedRole==='admin'?showAdmin():showRep();
+    }catch(e){
+      // Reset button if something goes wrong
+      btn.textContent='Sign In';btn.disabled=false;loggedIn=false;
+      showErr('Login error. Please try again.');
+    }
+  },500);
 }
 document.addEventListener('keydown',e=>{
   if(!loggedIn&&authMode==='pin'&&!document.getElementById('name-modal').classList.contains('on')){
@@ -1057,6 +1086,7 @@ function showRep(){
   attachReportListener();
   startKeepAlive();
 }
+function showAdmin(){
   showScreen('screen-admin');
   renderAdminAll();
   setTimeout(()=>{if(!adminMap)initAdminMap();else{updateAdminMarkers();renderAdminAll();}},80);
@@ -1990,6 +2020,9 @@ function seedDemo(){
     {id:'p2',fbKey:'p2',name:'Losartan',category:'Antihypertensive'},
     {id:'p3',fbKey:'p3',name:'Metformin',category:'Antidiabetic'},
   ];
+  // Show demo credentials hint on login
+  const ls=document.getElementById('fb-login-status');
+  if(ls){ls.textContent='Demo mode · Rep: ana / rep123 · Admin PIN: 9999';ls.style.color='rgba(255,255,255,0.55)';}
   populateRepSelects();populateProductDropdown();renderRepScreen();renderAdminAll();
 }
 
