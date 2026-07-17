@@ -308,6 +308,19 @@ body{display:flex;flex-direction:column}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #screen-admin .toast{bottom:16px}
 
+/* ── Engagement Notifications ──────────────────────── */
+.engage-notif{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--rl);padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:auto;display:flex;align-items:flex-start;gap:10px;animation:notifSlideIn .3s cubic-bezier(.34,1.56,.64,1);border-left:3px solid var(--teal);min-width:220px;max-width:280px}
+.engage-notif.login-notif{border-left-color:var(--blue)}
+.engage-notif.report-notif{border-left-color:var(--amber)}
+@keyframes notifSlideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes notifSlideOut{to{transform:translateX(120%);opacity:0}}
+.notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:13px;font-weight:700;color:var(--text);line-height:1.3}
+.notif-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.notif-time{font-size:10px;color:var(--text3);margin-top:3px}
+.notif-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0;flex-shrink:0;align-self:flex-start}
+
 /* ── CHAT ───────────────────────────────────────────── */
 .chat-fab{position:fixed;bottom:calc(80px + var(--sb));right:16px;width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(24,95,165,.45);z-index:800;transition:transform .2s}
 .chat-fab:hover{transform:scale(1.08)}
@@ -837,6 +850,9 @@ body{display:flex;flex-direction:column}
 
 <div class="toast" id="toast"></div>
 
+<!-- ── ENGAGEMENT NOTIFICATION POPUP ─────────────────── -->
+<div id="engage-notif-stack" style="position:fixed;top:calc(var(--st)+70px);right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000;pointer-events:none;max-width:280px"></div>
+
 <!-- ── CHAT ──────────────────────────────────────────────── -->
 <!-- Floating action button -->
 <button class="chat-fab" id="chat-fab" onclick="toggleChat()" aria-label="Open chat">
@@ -978,6 +994,55 @@ function attachListeners(){
     itineraries=objArr(s.val());
     if(document.getElementById('pg-itin')?.classList.contains('active'))renderItinDays();
     if(document.getElementById('pg-gps')?.classList.contains('active'))renderGpsItinStops();
+  });
+
+  // ── Engagement notifications (admin/sysadmin only) ──
+  // Listen for itinerary changes — fire popup when rep engages a stop
+  db.ref('itineraries').on('child_changed',snap=>{
+    if(loggedRole!=='admin'&&loggedRole!=='sysadmin')return;
+    const item=snap.val();
+    if(!item||!item.engaged||!item.engagedAt)return;
+    // Only notify for recent engagements (last 30 seconds) to avoid stale on load
+    if(Date.now()-new Date(item.engagedAt).getTime()>30000)return;
+    const name=repName(item.repId);
+    showEngageNotif({
+      type:'engage',
+      icon:'📍',
+      title:`${name} arrived`,
+      sub:`At: ${item.name}`,
+      time:item.engagedAt
+    });
+  });
+
+  // Notify when a rep goes online (live_location child added)
+  db.ref('live_locations').on('child_added',snap=>{
+    if(loggedRole!=='admin'&&loggedRole!=='sysadmin')return;
+    const item=snap.val();
+    if(!item||!item.t)return;
+    // Only for very recent logins (last 15 seconds)
+    if(Date.now()-item.t>15000)return;
+    showEngageNotif({
+      type:'login',
+      icon:'🟢',
+      title:`${item.name||repName(snap.key)} is now online`,
+      sub:`GPS tracking started`,
+      time:new Date(item.t).toISOString()
+    });
+  });
+
+  // Notify when rep submits daily report
+  db.ref('reports').on('child_added',snap=>{
+    if(loggedRole!=='admin'&&loggedRole!=='sysadmin')return;
+    const r=snap.val();
+    if(!r||!r.submittedAt)return;
+    if(Date.now()-new Date(r.submittedAt).getTime()>30000)return;
+    showEngageNotif({
+      type:'report',
+      icon:'📋',
+      title:`${r.repName||repName(r.repId)} submitted report`,
+      sub:`${r.stopsEngaged||0}/${r.stopsTotal||0} stops · ${r.activitiesTotal||0} activities`,
+      time:r.submittedAt
+    });
   });
   // Reports — admin sees all
   db.ref('reports').on('value',s=>{
@@ -2638,7 +2703,11 @@ async function engageStop(key){
   const loc=trailPts.length?trailPts[trailPts.length-1]:null;
   const update={engaged:true,done:true,engagedAt,engagedLat:loc?.lat||null,engagedLng:loc?.lng||null};
   if(fbReady&&db)await fbUpdate('itineraries/'+key,update);
-  else{Object.assign(s,update);renderGpsItinStops();renderItinStops();}
+  else{
+    Object.assign(s,update);renderGpsItinStops();renderItinStops();
+    // Trigger local notification if admin is viewing same app
+    showEngageNotif({type:'engage',icon:'📍',title:`${repName(s.repId)} arrived`,sub:`At: ${s.name}`,time:engagedAt});
+  }
   toast('✓ Engaged at '+s.name+'!',3000);
   // Check if all done — prompt report
   const todayStr=new Date().toISOString().slice(0,10);
@@ -2798,6 +2867,73 @@ function blockLogoutIfNoReport(){
   }
   return false;
 }
+// ─────────────────────────────────────────────────────────────
+//  ENGAGEMENT NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────
+function showEngageNotif({type,icon,title,sub,time}){
+  // Only show when logged in as admin or sysadmin
+  if(!loggedIn||(loggedRole!=='admin'&&loggedRole!=='sysadmin'))return;
+  const stack=document.getElementById('engage-notif-stack');
+  if(!stack)return;
+
+  const id='notif-'+Date.now();
+  const timeStr=time?new Date(time).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}):'';
+  const colorMap={engage:'var(--teal-l)',login:'var(--blue-l)',report:'var(--amber-l)'};
+  const notif=document.createElement('div');
+  notif.className=`engage-notif${type==='login'?' login-notif':type==='report'?' report-notif':''}`;
+  notif.id=id;
+  notif.innerHTML=`
+    <div class="notif-icon" style="background:${colorMap[type]||'var(--bg2)'}">${icon}</div>
+    <div class="notif-body">
+      <div class="notif-title">${title}</div>
+      ${sub?`<div class="notif-sub">${sub}</div>`:''}
+      ${timeStr?`<div class="notif-time">${timeStr}</div>`:''}
+    </div>
+    <button class="notif-close" onclick="dismissNotif('${id}')">×</button>`;
+
+  stack.appendChild(notif);
+  playNotifSound(type);
+
+  // Auto-dismiss after 6 seconds
+  setTimeout(()=>dismissNotif(id),6000);
+
+  // Keep max 4 notifications visible
+  const all=stack.querySelectorAll('.engage-notif');
+  if(all.length>4)dismissNotif(all[0].id);
+}
+
+function dismissNotif(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.style.animation='notifSlideOut .25s ease forwards';
+  setTimeout(()=>el.remove(),250);
+}
+
+function playNotifSound(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0,ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.12,ctx.currentTime+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+    if(type==='engage'){
+      // Two-tone chime: C5 then E5
+      osc.frequency.setValueAtTime(523,ctx.currentTime);
+      osc.frequency.setValueAtTime(659,ctx.currentTime+0.12);
+    }else if(type==='login'){
+      osc.frequency.setValueAtTime(440,ctx.currentTime);
+      osc.frequency.setValueAtTime(554,ctx.currentTime+0.1);
+    }else{
+      osc.frequency.setValueAtTime(392,ctx.currentTime);
+    }
+    osc.type='sine';
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime+0.45);
+  }catch(e){/* audio not supported */}
+}
+
 async function init(){
   await loadBranding();
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
