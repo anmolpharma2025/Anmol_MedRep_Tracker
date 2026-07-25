@@ -1244,6 +1244,34 @@ function fDT(iso){const d=new Date(iso);return d.toLocaleDateString('en-PH',{mon
 function fDur(ms){if(!ms||ms<0)return'—';const m=Math.round(ms/60000);return m<60?m+'m':`${Math.floor(m/60)}h ${m%60}m`;}
 function fAgo(ts){if(!ts)return'';const s=Math.round((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago';}
 function today(){return new Date().toISOString().slice(0,10);}
+
+// ── Haversine distance calculation ────────────────────────
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function calcTrailKm(points){
+  // Calculate total distance from an array of {lat,lng} points
+  if(!points||points.length<2)return 0;
+  let km=0;
+  for(let i=1;i<points.length;i++){
+    const a=points[i-1],b=points[i];
+    if(a.lat&&a.lng&&b.lat&&b.lng)km+=haversineKm(a.lat,a.lng,b.lat,b.lng);
+  }
+  return Math.round(km*10)/10; // 1 decimal place
+}
+function calcStopKm(stops){
+  // Fallback: estimate distance by summing between engaged stop coordinates
+  const pts=stops
+    .filter(s=>(s.engaged||s.done)&&s.engagedLat&&s.engagedLng)
+    .sort((a,b)=>(a.engagedAt||'').localeCompare(b.engagedAt||''));
+  return calcTrailKm(pts.map(s=>({lat:s.engagedLat,lng:s.engagedLng})));
+}
 function toast(msg,dur=2200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),dur);}
 function repNav(id){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const el=document.getElementById('nav-'+id);if(el)el.classList.add('active');}
 
@@ -1908,7 +1936,8 @@ async function endSession(){
   stopGPS();clearInterval(timerInt);
   const logoutTime=new Date().toISOString();
   if(fbReady&&db&&activeSession.fbKey){
-    await fbUpdate('sessions/'+activeSession.fbKey,{logoutTime,trailCount:trailPts.length});
+    const finalKm=calcTrailKm(trailPts);
+    await fbUpdate('sessions/'+activeSession.fbKey,{logoutTime,trailCount:trailPts.length,distanceKm:finalKm,trail:trailPts});
     if(liveRef)await liveRef.remove();
   }else{const s=sessions.find(x=>x.id===activeSession.id);if(s){s.logoutTime=logoutTime;s.trail=trailPts;}}
   liveRef=null;
@@ -1929,7 +1958,10 @@ function startGPS(){
     const pt={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:Math.round(pos.coords.accuracy),t:Date.now()};
     trailPts.push(pt);
     if(liveRef)await liveRef.set({lat:pt.lat,lng:pt.lng,acc:pt.acc,t:pt.t,repId:activeSession.repId,name:repName(activeSession.repId)});
-    if(fbReady&&db&&activeSession.fbKey&&trailPts.length%10===0)fbUpdate('sessions/'+activeSession.fbKey,{trailCount:trailPts.length,lastLat:pt.lat,lastLng:pt.lng});
+    if(fbReady&&db&&activeSession.fbKey&&trailPts.length%10===0){
+      const km=calcTrailKm(trailPts);
+      fbUpdate('sessions/'+activeSession.fbKey,{trailCount:trailPts.length,lastLat:pt.lat,lastLng:pt.lng,distanceKm:km,trail:trailPts});
+    }
     const infoEl=document.getElementById('gps-info');
     const shortEl=document.getElementById('gps-info-short');
     const txt=`${repName(activeSession?.repId)} · ${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} ±${pt.acc}m · ${trailPts.length} pts`;
@@ -2778,8 +2810,51 @@ function initReportPage(){
   if(todayActs.length){
     actEl.innerHTML=todayActs.map(a=>`<div>• ${a.doctor} — ${a.product} (${a.outcome})</div>`).join('');
   }else{actEl.innerHTML='<span style="color:var(--text3)">No activities logged today</span>';}
-  // Pre-fill if draft saved
-  const draft=JSON.parse(localStorage.getItem('report_draft_'+loggedRepId+'_'+todayStr)||'null');
+  // Auto-calculate km from GPS trail or stop coordinates
+  if(!submitted){
+    const draft=JSON.parse(localStorage.getItem('report_draft_'+loggedRepId+'_'+todayStr)||'null');
+    const kmEl=document.getElementById('report-km');
+    if(kmEl&&(!draft||!draft.km)){
+      let autoKm=0;
+      // Priority 1: live GPS trail from current session
+      if(trailPts&&trailPts.length>1){
+        autoKm=calcTrailKm(trailPts);
+      }
+      // Priority 2: calculate from engaged stop GPS coordinates
+      if(!autoKm){
+        const todayStopsWithCoords=itineraries.filter(x=>x.date===todayStr&&x.repId===loggedRepId);
+        autoKm=calcStopKm(todayStopsWithCoords);
+      }
+      // Priority 3: check today's completed session for stored distanceKm
+      if(!autoKm){
+        const todaySession=sessions.find(s=>s.repId===loggedRepId&&s.loginTime&&s.loginTime.startsWith(todayStr));
+        if(todaySession?.distanceKm)autoKm=todaySession.distanceKm;
+      }
+      // Priority 4: try to get trail from Firebase session record
+      if(!autoKm&&fbReady&&db&&activeSession?.fbKey){
+        db.ref('sessions/'+activeSession.fbKey).once('value').then(s=>{
+          const sess=s.val();
+          if(sess&&sess.trail&&Array.isArray(sess.trail)&&sess.trail.length>1){
+            const km=calcTrailKm(sess.trail);
+            if(km>0&&kmEl&&!kmEl.value)kmEl.value=km;
+          }
+        });
+      }
+      if(autoKm>0){
+        kmEl.value=autoKm;
+        kmEl.title='Auto-calculated from GPS route';
+        // Show auto-calc badge
+        const parent=kmEl.closest('.field');
+        if(parent&&!parent.querySelector('.km-auto-badge')){
+          const badge=document.createElement('div');
+          badge.className='km-auto-badge';
+          badge.style.cssText='font-size:10px;color:var(--teal);font-weight:600;margin-top:3px;display:flex;align-items:center;gap:4px';
+          badge.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Auto-calculated from GPS route';
+          parent.appendChild(badge);
+        }
+      }
+    }
+  }
   if(draft&&!submitted){
     document.getElementById('report-summary').value=draft.summary||'';
     document.getElementById('report-tomorrow').value=draft.tomorrow||'';
