@@ -213,6 +213,20 @@ body{display:flex;flex-direction:column}
 .engage-card-sub{font-size:12px;color:var(--teal-d);opacity:.8}
 /* Report */
 .report-submitted{background:var(--teal-l);border:1px solid var(--teal);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--teal-d);display:flex;align-items:center;gap:8px;margin-bottom:8px}
+/* Expense lines */
+.exp-line{background:var(--bg2);border-radius:var(--r);padding:8px 10px;margin-bottom:6px;border:0.5px solid var(--border)}
+.exp-line-top{display:flex;align-items:center;gap:8px}
+.exp-line-type{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0}
+.exp-line-amount{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap}
+.exp-line-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0}
+.exp-line-del:hover{color:var(--red)}
+.exp-photo-row{margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.exp-photo-btn{font-size:11px;padding:4px 10px;border-radius:20px;border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.exp-photo-btn:hover{border-color:var(--blue);color:var(--blue)}
+.exp-photo-thumb{width:48px;height:48px;border-radius:6px;object-fit:cover;cursor:pointer;border:0.5px solid var(--border)}
+.exp-photo-thumb:hover{opacity:.8}
+.exp-note-input{flex:1;min-width:100px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:12px;font-family:inherit;outline:none}
+.exp-note-input:focus{border-color:var(--blue)}
 /* Admin report cards */
 .adm-report-card{border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
 .adm-report-header{padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;background:var(--bg2);transition:background .12s}
@@ -744,7 +758,36 @@ body{display:flex;flex-direction:column}
         </div>
         <div class="field-row">
           <div class="field"><label>Km travelled</label><input type="number" id="report-km" placeholder="e.g. 45" min="0" step="0.1"></div>
-          <div class="field"><label>Expenses (₱)</label><input type="number" id="report-expenses" placeholder="e.g. 500" min="0"></div>
+          <div class="field"><label>Total expenses</label><input type="number" id="report-expenses" placeholder="Auto-totalled" min="0" readonly style="background:var(--bg2);color:var(--text2);cursor:default"></div>
+        </div>
+        <!-- Expense line items -->
+        <div class="field">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            Expense details
+            <span id="expense-total-badge" style="font-size:12px;font-weight:700;color:var(--blue)"></span>
+          </label>
+          <div id="expense-lines"></div>
+          <!-- Add expense row -->
+          <div id="expense-add-row" style="display:flex;gap:6px;margin-top:8px;align-items:center">
+            <select id="exp-type" style="flex:1.2;padding:9px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+              <option value="">— Select type —</option>
+              <option value="Meal allowance">🍱 Meal allowance</option>
+              <option value="Transportation (jeepney/bus)">🚌 Transportation (jeepney/bus)</option>
+              <option value="Transportation (taxi/Grab)">🚕 Transportation (taxi/Grab)</option>
+              <option value="Fuel / gasoline">⛽ Fuel / gasoline</option>
+              <option value="Parking">🅿️ Parking</option>
+              <option value="Toll fee">🛣️ Toll fee</option>
+              <option value="Accommodation">🏨 Accommodation</option>
+              <option value="Doctor's gift / token">🎁 Doctor's gift / token</option>
+              <option value="Printing / materials">🖨️ Printing / materials</option>
+              <option value="Communication load">📱 Communication load</option>
+              <option value="Other">📝 Other</option>
+            </select>
+            <input type="number" id="exp-amount" placeholder="₱" min="0" style="width:80px;padding:9px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+            <button class="btn-icon" onclick="addExpenseLine()" style="width:38px;height:38px;flex-shrink:0;background:var(--blue);color:#fff;border-radius:var(--r)">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
         </div>
         <button class="btn btn-blue" onclick="submitDailyReport()">Submit Daily Report</button>
         <p id="report-msg" style="font-size:12px;margin-top:8px;text-align:center;min-height:16px;color:var(--teal)"></p>
@@ -1644,6 +1687,16 @@ function renderAdmReports(){
       <div class="adm-report-body" style="display:none">
         ${r.summary?`<div class="adm-report-section"><div class="adm-report-section-label">Summary</div><div class="adm-report-text">${escHtml(r.summary)}</div></div>`:''}
         ${r.tomorrow?`<div class="adm-report-section"><div class="adm-report-section-label">Plan for tomorrow</div><div class="adm-report-text">${escHtml(r.tomorrow)}</div></div>`:''}
+        ${r.expenseLines&&r.expenseLines.length?`<div class="adm-report-section">
+          <div class="adm-report-section-label">Expense breakdown</div>
+          ${r.expenseLines.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:12px">
+            <span style="flex:1;color:var(--text)">${e.type}</span>
+            ${e.note?`<span style="color:var(--text3);font-size:11px">${e.note}</span>`:''}
+            ${e.hasPhoto?`<span style="font-size:11px;color:var(--blue)">📷</span>`:''}
+            <span style="font-weight:700;color:var(--blue);white-space:nowrap">₱${Number(e.amount||0).toLocaleString()}</span>
+          </div>`).join('')}
+          <div style="text-align:right;font-size:12px;font-weight:700;color:var(--text);margin-top:4px">Total: ₱${Number(r.expenses||0).toLocaleString()}</div>
+        </div>`:''}
       </div>
     </div>`;
   };
@@ -2787,6 +2840,109 @@ function checkReportDue(){
   const dot=document.getElementById('nav-report-dot');
   if(dot)dot.style.display=submitted?'none':'inline-block';
 }
+// ─────────────────────────────────────────────────────────────
+//  EXPENSE TRACKER
+// ─────────────────────────────────────────────────────────────
+let _expenseLines=[]; // [{id, type, amount, note, photoData}]
+
+function initExpenses(prefill=[]){
+  _expenseLines=prefill.length?prefill.map(e=>({...e,id:e.id||'e'+Date.now()+Math.random()})):[];
+  renderExpenseLines();
+}
+
+function renderExpenseLines(){
+  const el=document.getElementById('expense-lines');if(!el)return;
+  const total=_expenseLines.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  // Update total fields
+  const expInput=document.getElementById('report-expenses');
+  if(expInput)expInput.value=total?total.toFixed(0):'';
+  const badge=document.getElementById('expense-total-badge');
+  if(badge)badge.textContent=total?'Total: ₱'+Number(total).toLocaleString():'';
+
+  if(!_expenseLines.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">No expenses added yet. Use the row below to add.</div>';
+    return;
+  }
+  el.innerHTML=_expenseLines.map((exp,i)=>`
+    <div class="exp-line" id="expline-${exp.id}">
+      <div class="exp-line-top">
+        <div class="exp-line-type">${exp.type}</div>
+        <div class="exp-line-amount">₱${Number(exp.amount||0).toLocaleString()}</div>
+        <button class="exp-line-del" onclick="removeExpenseLine('${exp.id}')" title="Remove">×</button>
+      </div>
+      <div class="exp-photo-row">
+        <input class="exp-note-input" placeholder="Note (optional)" value="${exp.note||''}"
+          oninput="updateExpNote('${exp.id}',this.value)" style="max-width:200px">
+        <label class="exp-photo-btn">
+          <input type="file" accept="image/*" capture="environment" style="display:none"
+            onchange="attachExpPhoto('${exp.id}',event)">
+          ${exp.photoData
+            ?`<img class="exp-photo-thumb" src="${exp.photoData}" onclick="viewExpPhoto(event,'${exp.id}')" title="View receipt">`
+            :`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add receipt`}
+        </label>
+      </div>
+    </div>`).join('');
+}
+
+function addExpenseLine(){
+  const type=document.getElementById('exp-type').value;
+  const amount=parseFloat(document.getElementById('exp-amount').value);
+  if(!type){toast('Select an expense type.');return;}
+  if(!amount||amount<=0){toast('Enter an amount.');return;}
+  _expenseLines.push({id:'e'+Date.now(),type,amount,note:'',photoData:null});
+  document.getElementById('exp-type').value='';
+  document.getElementById('exp-amount').value='';
+  renderExpenseLines();
+  saveDraftExpenses();
+}
+
+function removeExpenseLine(id){
+  _expenseLines=_expenseLines.filter(e=>e.id!==id);
+  renderExpenseLines();
+  saveDraftExpenses();
+}
+
+function updateExpNote(id,val){
+  const exp=_expenseLines.find(e=>e.id===id);
+  if(exp){exp.note=val;saveDraftExpenses();}
+}
+
+function attachExpPhoto(id,event){
+  const file=event.target.files[0];if(!file)return;
+  if(file.size>3*1024*1024){toast('Photo too large — max 3MB.');event.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const exp=_expenseLines.find(e=>e.id===id);
+    if(exp){exp.photoData=ev.target.result;renderExpenseLines();saveDraftExpenses();}
+  };
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+
+function viewExpPhoto(event,id){
+  event.stopPropagation();
+  const exp=_expenseLines.find(e=>e.id===id);
+  if(!exp||!exp.photoData)return;
+  // Open in a lightbox overlay
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px';
+  ov.onclick=()=>ov.remove();
+  ov.innerHTML=`
+    <img src="${exp.photoData}" style="max-width:100%;max-height:80vh;border-radius:12px;object-fit:contain">
+    <div style="color:rgba(255,255,255,.7);font-size:13px">${exp.type}${exp.note?' · '+exp.note:''} · ₱${Number(exp.amount||0).toLocaleString()}</div>
+    <div style="color:rgba(255,255,255,.4);font-size:11px">Tap anywhere to close</div>`;
+  document.body.appendChild(ov);
+}
+
+function saveDraftExpenses(){
+  const todayStr=new Date().toISOString().slice(0,10);
+  const key='report_draft_'+loggedRepId+'_'+todayStr;
+  const draft=JSON.parse(localStorage.getItem(key)||'{}');
+  draft.expenses=_expenseLines.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  draft.expenseLines=_expenseLines;
+  localStorage.setItem(key,JSON.stringify(draft));
+}
+
 function initReportPage(){
   const todayStr=new Date().toISOString().slice(0,10);
   document.getElementById('report-date-label').textContent=new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -2859,7 +3015,10 @@ function initReportPage(){
     document.getElementById('report-summary').value=draft.summary||'';
     document.getElementById('report-tomorrow').value=draft.tomorrow||'';
     document.getElementById('report-km').value=draft.km||'';
-    document.getElementById('report-expenses').value=draft.expenses||'';
+    // Init expense lines from draft
+    initExpenses(draft.expenseLines||[]);
+  } else if(!submitted){
+    initExpenses([]);
   }
   if(submitted){
     // Show submitted values, disable form
@@ -2867,24 +3026,37 @@ function initReportPage(){
     document.getElementById('report-tomorrow').value=submitted.tomorrow||'';
     document.getElementById('report-km').value=submitted.km||'';
     document.getElementById('report-expenses').value=submitted.expenses||'';
-    ['report-summary','report-tomorrow','report-km','report-expenses'].forEach(id=>{
+    // Show submitted expense lines (read-only)
+    initExpenses(submitted.expenseLines||[]);
+    ['report-summary','report-tomorrow','report-km'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.disabled=true;
     });
-    document.querySelector('.btn.btn-blue[onclick="submitDailyReport()"]').disabled=true;
+    // Hide expense add row when submitted
+    const addRow=document.getElementById('expense-add-row');if(addRow)addRow.style.display='none';
+    // Disable expense line delete buttons
+    document.querySelectorAll('.exp-line-del').forEach(b=>b.style.display='none');
+    document.querySelectorAll('.exp-note-input').forEach(i=>i.disabled=true);
+    const btn=document.querySelector('.btn.btn-blue[onclick="submitDailyReport()"]');
+    if(btn)btn.disabled=true;
   }else{
-    ['report-summary','report-tomorrow','report-km','report-expenses'].forEach(id=>{
+    ['report-summary','report-tomorrow','report-km'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.disabled=false;
     });
+    const addRow=document.getElementById('expense-add-row');if(addRow)addRow.style.display='flex';
     const btn=document.querySelector('.btn.btn-blue[onclick="submitDailyReport()"]');
     if(btn)btn.disabled=false;
   }
   renderPastReports();
-  // Auto-save draft on input
-  ['report-summary','report-tomorrow','report-km','report-expenses'].forEach(id=>{
+  // Auto-save draft on text input
+  ['report-summary','report-tomorrow','report-km'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.oninput=()=>{
-      const d={summary:document.getElementById('report-summary').value,tomorrow:document.getElementById('report-tomorrow').value,km:document.getElementById('report-km').value,expenses:document.getElementById('report-expenses').value};
-      localStorage.setItem('report_draft_'+loggedRepId+'_'+todayStr,JSON.stringify(d));
+      const key='report_draft_'+loggedRepId+'_'+todayStr;
+      const d=JSON.parse(localStorage.getItem(key)||'{}');
+      d.summary=document.getElementById('report-summary').value;
+      d.tomorrow=document.getElementById('report-tomorrow').value;
+      d.km=document.getElementById('report-km').value;
+      localStorage.setItem(key,JSON.stringify(d));
     };
   });
 }
@@ -2900,7 +3072,8 @@ function renderPastReports(){
     </div>
     <div class="report-item-detail">
       ${r.summary?`<div>${r.summary.slice(0,100)}${r.summary.length>100?'…':''}</div>`:''}
-      <div style="margin-top:3px;color:var(--text3)">${r.km?r.km+' km · ':''} ${r.expenses?'₱'+Number(r.expenses).toLocaleString():''}</div>
+      <div style="margin-top:3px;color:var(--text3)">${r.km?r.km+' km':''} ${r.expenses?'· ₱'+Number(r.expenses).toLocaleString():''}</div>
+      ${r.expenseLines&&r.expenseLines.length?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${r.expenseLines.map(e=>`<span style="font-size:10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:2px 8px;color:var(--text2)">${e.type}: ₱${Number(e.amount||0).toLocaleString()}${e.hasPhoto?' 📷':''}</span>`).join('')}</div>`:''}
     </div>
   </div>`).join('');
 }
@@ -2908,16 +3081,32 @@ async function submitDailyReport(){
   const summary=document.getElementById('report-summary').value.trim();
   const tomorrow=document.getElementById('report-tomorrow').value.trim();
   const km=document.getElementById('report-km').value;
-  const expenses=document.getElementById('report-expenses').value;
+  const totalExpenses=_expenseLines.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
   if(!summary){document.getElementById('report-msg').style.color='var(--red)';document.getElementById('report-msg').textContent='Please write a summary before submitting.';return;}
   const todayStr=new Date().toISOString().slice(0,10);
   const todayStops=itineraries.filter(x=>x.date===todayStr&&x.repId===loggedRepId);
   const todayActs=activities.filter(a=>a.date===todayStr&&a.repId===loggedRepId);
-  const report={repId:loggedRepId,repName:loggedRepName,date:todayStr,submittedAt:new Date().toISOString(),summary,tomorrow,km:km||0,expenses:expenses||0,stopsTotal:todayStops.length,stopsEngaged:todayStops.filter(s=>s.engaged||s.done).length,activitiesTotal:todayActs.length};
+  // Strip photo data for the main report record to keep it light — photos stored separately
+  const expenseSummary=_expenseLines.map(e=>({id:e.id,type:e.type,amount:e.amount,note:e.note||'',hasPhoto:!!e.photoData}));
+  const report={
+    repId:loggedRepId,repName:loggedRepName,date:todayStr,
+    submittedAt:new Date().toISOString(),
+    summary,tomorrow,km:km||0,
+    expenses:totalExpenses,
+    expenseLines:expenseSummary,
+    stopsTotal:todayStops.length,
+    stopsEngaged:todayStops.filter(s=>s.engaged||s.done).length,
+    activitiesTotal:todayActs.length
+  };
   if(fbReady&&db){
-    await fbPush('reports',report);
-  }else{_reports.unshift({...report,id:'rpt'+Date.now()});}
-  // Clear draft
+    const ref=await fbPush('reports',report);
+    // Store expense photos separately (keyed by report + expense id)
+    _expenseLines.forEach(e=>{
+      if(e.photoData&&ref.key){
+        fbSet('expense_photos/'+ref.key+'/'+e.id,{photo:e.photoData,type:e.type,amount:e.amount});
+      }
+    });
+  }else{_reports.unshift({...report,expenseLines:_expenseLines,id:'rpt'+Date.now()});}
   localStorage.removeItem('report_draft_'+loggedRepId+'_'+todayStr);
   document.getElementById('report-msg').style.color='var(--teal)';
   document.getElementById('report-msg').textContent='✓ Report submitted successfully!';
