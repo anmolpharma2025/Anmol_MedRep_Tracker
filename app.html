@@ -1464,18 +1464,23 @@ async function attachPlacesAC(inputId, onPlaceSelected){
     if(!inp||!window.google)return;
     if(_acInstances[inputId])return;
     try{
-      // Load Places library via importLibrary (Places API New)
-      const {Autocomplete}=await google.maps.importLibrary('places');
-      // Make parent overflow visible so dropdown isn't clipped
+      let ACClass=null;
+      // Try new importLibrary first
+      if(google.maps.importLibrary){
+        try{const lib=await google.maps.importLibrary('places');ACClass=lib.Autocomplete;}catch(e){}
+      }
+      // Fall back to classic
+      if(!ACClass&&google.maps.places&&google.maps.places.Autocomplete){
+        ACClass=google.maps.places.Autocomplete;
+      }
+      if(!ACClass)return; // autocomplete not available — input works as plain text
       let parent=inp.parentElement;
       while(parent&&parent!==document.body){
         const st=window.getComputedStyle(parent);
-        if(st.overflow==='hidden'||st.overflowY==='hidden'){
-          parent.style.overflow='visible';
-        }
+        if(st.overflow==='hidden'||st.overflowY==='hidden')parent.style.overflow='visible';
         parent=parent.parentElement;
       }
-      const ac=new Autocomplete(inp,{
+      const ac=new ACClass(inp,{
         componentRestrictions:{country:'ph'},
         fields:['name','geometry','formatted_address'],
       });
@@ -1484,19 +1489,14 @@ async function attachPlacesAC(inputId, onPlaceSelected){
       ac.addListener('place_changed',()=>{
         inp._acOpen=false;
         const place=ac.getPlace();
-        if(!place||!place.geometry){
-          onPlaceSelected(inp.value.trim(),null,null);
-          return;
-        }
+        if(!place||!place.geometry){onPlaceSelected(inp.value.trim(),null,null);return;}
         const name=place.name||(place.formatted_address||inp.value);
         const lat=place.geometry.location.lat();
         const lng=place.geometry.location.lng();
         inp.value=name;
         onPlaceSelected(name,lat,lng);
       });
-    }catch(e){
-      console.warn('Places autocomplete unavailable:',e);
-    }
+    }catch(e){console.warn('Autocomplete unavailable:',e);}
   });
 }
 function geocodeDest(name,cb){
@@ -1586,7 +1586,7 @@ function loadGoogleMaps(cb){
   }
   window._gmCB=cb;
   const s=document.createElement('script');s.id='gmap-scr';
-  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=weekly&callback=_gmCB`;
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=3.55&libraries=places,geometry,marker&callback=_gmCB`;
   s.onerror=()=>{
     // Script load failed (network error, wrong key format) — show clean error
     ['rep-map','admin-map','itin-map'].forEach(id=>{
