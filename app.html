@@ -1586,7 +1586,7 @@ function loadGoogleMaps(cb){
   }
   window._gmCB=cb;
   const s=document.createElement('script');s.id='gmap-scr';
-  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=3.55&libraries=places,geometry,marker&callback=_gmCB`;
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry&v=3&callback=_gmCB`;
   s.onerror=()=>{
     // Script load failed (network error, wrong key format) — show clean error
     ['rep-map','admin-map','itin-map'].forEach(id=>{
@@ -3268,6 +3268,7 @@ function playNotifSound(type){
   }catch(e){}
 }
 
+window.gm_authFailure_placeholder=null;
 window.gm_authFailure=function(){
   ['itin-map','rep-map','admin-map'].forEach(id=>{
     const el=document.getElementById(id);
