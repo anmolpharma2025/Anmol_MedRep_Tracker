@@ -721,7 +721,7 @@ body{display:flex;flex-direction:column}
         </div>
         <div id="itin-stops-list"></div>
         <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-          <input type="text" id="itin-stop-input" placeholder="Add stop (doctor, clinic...)" autocomplete="off"
+          <input type="text" id="itin-stop-input" placeholder="Type stop name (doctor, clinic, hospital…)" autocomplete="off"
             style="flex:1;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
           <input type="time" id="itin-stop-time" value="08:00"
             style="width:90px;padding:10px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;outline:none">
@@ -965,6 +965,8 @@ let repMap=null, repMarker=null, repPolyline=null, destMarkers=[];
 let adminMap=null, admMarkers={}, admPolylines={}, admInfoWins={};
 let mapFilter='all', showTrails=true;
 let db=null, fbReady=false;
+// App secret — must match firebase-config.js APP_SECRET and Firebase rules
+const _APP_SECRET=typeof APP_SECRET!=='undefined'?APP_SECRET:'medrep_app_2024';
 
 // ─────────────────────────────────────────────────────────────
 //  INDEXEDDB (branding + offline fallback)
@@ -1103,9 +1105,14 @@ function attachListeners(){
   db.ref('branding').once('value').then(s=>{const b=s.val();if(b){if(b.name)applyName(b.name);if(b.logo)applyLogo(b.logo);}});
 }
 function objArr(val){return val?Object.entries(val).map(([k,v])=>({...v,fbKey:k})):[];}
-function fbPush(path,data){return db?db.ref(path).push(data):Promise.resolve({key:'loc_'+Date.now()});}
-function fbSet(path,data){return db?db.ref(path).set(data):Promise.resolve();}
-function fbUpdate(path,data){return db?db.ref(path).update(data):Promise.resolve();}
+function _withSecret(data){
+  if(typeof data==='object'&&data!==null&&!Array.isArray(data))
+    return{...data,_s:_APP_SECRET};
+  return data;
+}
+function fbPush(path,data){return db?db.ref(path).push(_withSecret(data)):Promise.resolve({key:'loc_'+Date.now()});}
+function fbSet(path,data){return db?db.ref(path).set(_withSecret(data)):Promise.resolve();}
+function fbUpdate(path,data){return db?db.ref(path).update(_withSecret(data)):Promise.resolve();}
 function fbRemove(path){return db?db.ref(path).remove():Promise.resolve();}
 
 // ─────────────────────────────────────────────────────────────
@@ -1342,9 +1349,18 @@ function repGo(tab){
   if(tab==='itin'){
     initItinerary();
     setTimeout(()=>{
+      // Attach Enter key for plain text add (always works)
+      const inp=document.getElementById('itin-stop-input');
+      if(inp&&!inp._enterBound){
+        inp._enterBound=true;
+        inp.addEventListener('keydown',e=>{
+          if(e.key==='Enter'&&!inp._acOpen){e.preventDefault();addItinStop();}
+        });
+      }
+      // Attach Places autocomplete if Maps is available
       attachPlacesAC('itin-stop-input',(name,lat,lng)=>{
-        const inp=document.getElementById('itin-stop-input');
         if(inp){inp.value=name;inp._acLat=lat;inp._acLng=lng;}
+        addItinStop();
       });
     },200);
   }
@@ -1464,7 +1480,8 @@ function attachPlacesAC(inputId, onPlaceSelected){
     });
     _acInstances[inputId]=ac;
     inp.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
-    ac.addListener('place_changed',()=>{
+    // Track dropdown open state
+    ac.addListener('place_changed',()=>{inp._acOpen=false;
       const place=ac.getPlace();
       if(!place||!place.geometry){
         onPlaceSelected(inp.value.trim(),null,null);
@@ -1549,20 +1566,34 @@ function loadGoogleMaps(cb){
     return;
   }
   if(typeof GOOGLE_MAPS_API_KEY==='undefined'||!GOOGLE_MAPS_API_KEY||GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){
+    // Show placeholder — no error, no border
     ['rep-map','admin-map','itin-map'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(!el)return;
+      const el=document.getElementById(id);if(!el)return;
       el.style.border='none';
-      el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;padding:20px;text-align:center;color:#0C447C;background:var(--blue-l);border-radius:inherit">
+      el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;padding:20px;text-align:center;background:var(--blue-l);border-radius:inherit">
         <div style="font-size:28px">🗺️</div>
-        <div style="font-size:13px;font-weight:700">Add Google Maps API key in firebase-config.js</div>
+        <div style="font-size:13px;font-weight:700;color:#0C447C">Map unavailable</div>
+        <div style="font-size:11px;color:#185FA5">Add Google Maps API key in firebase-config.js</div>
       </div>`;
     });
+    // cb is NOT called — autocomplete won't attach, input stays as plain text — that's correct
     return;
   }
   window._gmCB=cb;
   const s=document.createElement('script');s.id='gmap-scr';
   s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=beta&callback=_gmCB`;
+  s.onerror=()=>{
+    // Script load failed (network error, wrong key format) — show clean error
+    ['rep-map','admin-map','itin-map'].forEach(id=>{
+      const el=document.getElementById(id);if(!el)return;
+      el.style.border='none';
+      el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:6px;padding:16px;text-align:center;background:var(--blue-l);border-radius:inherit">
+        <div style="font-size:22px">⚠️</div>
+        <div style="font-size:12px;font-weight:700;color:#A32D2D">Could not load Google Maps</div>
+        <div style="font-size:11px;color:#5F5E5A">Check your API key and billing in Google Cloud Console</div>
+      </div>`;
+    });
+  };
   s.async=true;s.defer=true;document.head.appendChild(s);
 }
 function fitAll(){
@@ -2466,10 +2497,18 @@ async function removeItinStop(key){
 
 // ── Itinerary Map ──────────────────────────────────────
 function initItinMap(){
-  const el=document.getElementById('itin-map');if(!el||itinMap)return;
-  if(!window.google){
-    loadGoogleMaps(()=>createItinMap());
-  }else{createItinMap();}
+  const el=document.getElementById('itin-map');if(!el)return;
+  if(typeof GOOGLE_MAPS_API_KEY==='undefined'||!GOOGLE_MAPS_API_KEY||GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){
+    el.style.border='none';
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;padding:20px;text-align:center;background:var(--blue-l);border-radius:inherit">
+      <div style="font-size:28px">🗺️</div>
+      <div style="font-size:12px;font-weight:700;color:#0C447C">Route map</div>
+      <div style="font-size:11px;color:#185FA5">Add Google Maps API key to enable map view</div>
+    </div>`;
+    return;
+  }
+  if(itinMap)return; // already created
+  loadGoogleMaps(()=>createItinMap());
 }
 function createItinMap(){
   const el=document.getElementById('itin-map');if(!el)return;
@@ -3225,19 +3264,23 @@ function playNotifSound(type){
 }
 
 window.gm_authFailure=function(){
-  // Google Maps auth failed (billing issue or wrong key)
   ['itin-map','rep-map','admin-map'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     el.style.border='none';
     el.style.background='var(--blue-l)';
     el.style.borderRadius='var(--rl)';
+    // Remove Google's injected error content first
+    el.innerHTML='';
     el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;padding:16px;text-align:center">
-      <div style="font-size:24px">⚠️</div>
+      <div style="font-size:22px">⚠️</div>
       <div style="font-size:12px;font-weight:700;color:#A32D2D">Google Maps billing not set up</div>
-      <div style="font-size:11px;color:#5F5E5A">Go to console.cloud.google.com → Billing to fix this</div>
+      <div style="font-size:11px;color:#5F5E5A;max-width:200px">Go to console.cloud.google.com → Billing to fix this</div>
     </div>`;
   });
+  // Hide the map wrapper border too
+  const wrap=document.getElementById('itin-map-wrap');
+  if(wrap)wrap.style.border='none';
 };
 async function init(){
   await loadBranding();
