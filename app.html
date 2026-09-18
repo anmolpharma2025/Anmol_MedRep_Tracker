@@ -1458,41 +1458,45 @@ function updateRepTrail(){
 }
 // ── Google Places Autocomplete ─────────────────────────────
 const _acInstances={};
-function attachPlacesAC(inputId, onPlaceSelected){
-  loadGoogleMaps(()=>{
+async function attachPlacesAC(inputId, onPlaceSelected){
+  loadGoogleMaps(async()=>{
     const inp=document.getElementById(inputId);
-    if(!inp||!window.google||!window.google.maps.places)return;
+    if(!inp||!window.google)return;
     if(_acInstances[inputId])return;
-    // Temporarily make parent cards overflow:visible so pac-container isn't clipped
-    let parent=inp.parentElement;
-    while(parent&&parent!==document.body){
-      const style=window.getComputedStyle(parent);
-      if(style.overflow==='hidden'||style.overflowY==='hidden'){
-        parent._origOverflow=parent.style.overflow;
-        parent.style.overflow='visible';
+    try{
+      // Load Places library via importLibrary (Places API New)
+      const {Autocomplete}=await google.maps.importLibrary('places');
+      // Make parent overflow visible so dropdown isn't clipped
+      let parent=inp.parentElement;
+      while(parent&&parent!==document.body){
+        const st=window.getComputedStyle(parent);
+        if(st.overflow==='hidden'||st.overflowY==='hidden'){
+          parent.style.overflow='visible';
+        }
+        parent=parent.parentElement;
       }
-      parent=parent.parentElement;
+      const ac=new Autocomplete(inp,{
+        componentRestrictions:{country:'ph'},
+        fields:['name','geometry','formatted_address'],
+      });
+      _acInstances[inputId]=ac;
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
+      ac.addListener('place_changed',()=>{
+        inp._acOpen=false;
+        const place=ac.getPlace();
+        if(!place||!place.geometry){
+          onPlaceSelected(inp.value.trim(),null,null);
+          return;
+        }
+        const name=place.name||(place.formatted_address||inp.value);
+        const lat=place.geometry.location.lat();
+        const lng=place.geometry.location.lng();
+        inp.value=name;
+        onPlaceSelected(name,lat,lng);
+      });
+    }catch(e){
+      console.warn('Places autocomplete unavailable:',e);
     }
-    const ac=new google.maps.places.Autocomplete(inp,{
-      componentRestrictions:{country:'ph'},
-      fields:['name','geometry','formatted_address'],
-      types:['establishment','geocode']
-    });
-    _acInstances[inputId]=ac;
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
-    // Track dropdown open state
-    ac.addListener('place_changed',()=>{inp._acOpen=false;
-      const place=ac.getPlace();
-      if(!place||!place.geometry){
-        onPlaceSelected(inp.value.trim(),null,null);
-        return;
-      }
-      const name=place.name||(place.formatted_address||inp.value);
-      const lat=place.geometry.location.lat();
-      const lng=place.geometry.location.lng();
-      inp.value=name;
-      onPlaceSelected(name,lat,lng);
-    });
   });
 }
 function geocodeDest(name,cb){
@@ -1559,8 +1563,9 @@ function updateAdminMarkers(){
   });
 }
 function loadGoogleMaps(cb){
-  if(window.google&&window.google.maps&&window.google.maps.places){cb();return;}
+  if(window.google&&window.google.maps){cb();return;}
   if(document.getElementById('gmap-scr')){
+    if(window.google&&window.google.maps){cb();return;}
     const prev=window._gmCB;
     window._gmCB=()=>{if(prev)prev();cb();};
     return;
@@ -1581,7 +1586,7 @@ function loadGoogleMaps(cb){
   }
   window._gmCB=cb;
   const s=document.createElement('script');s.id='gmap-scr';
-  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=beta&callback=_gmCB`;
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=weekly&callback=_gmCB`;
   s.onerror=()=>{
     // Script load failed (network error, wrong key format) — show clean error
     ['rep-map','admin-map','itin-map'].forEach(id=>{
