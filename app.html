@@ -102,14 +102,15 @@ body{display:flex;flex-direction:column}
 /* Name modal */
 .modal-bg{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
 .modal-bg.on{display:flex}
-.modal-box{background:var(--bg);border-radius:var(--rl);padding:22px;width:100%;max-width:300px;box-shadow:0 16px 48px rgba(0,0,0,.3)}
+.modal-box{background:var(--bg);border-radius:var(--rl);padding:22px;width:100%;max-width:360px;box-shadow:0 16px 48px rgba(0,0,0,.3)}
 .modal-box h3{font-size:15px;font-weight:700;margin-bottom:12px}
 .modal-box input{width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-size:15px;outline:none;font-family:inherit;margin-bottom:12px}
 .modal-box input:focus{border-color:var(--blue)}
-.modal-btns{display:flex;gap:8px}
-.modal-btns button{flex:1;padding:10px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit}
+.modal-btns{display:flex;gap:8px;flex-direction:column}
+@media(min-width:400px){.modal-btns{flex-direction:row}}
+.modal-btns button{flex:1;padding:13px;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit;min-height:48px}
 .mbtn-cancel{background:var(--bg2);color:var(--text2)}
-.mbtn-save{background:var(--blue);color:#fff}
+.mbtn-save{background:var(--blue);color:#fff;font-size:15px}
 
 /* ══════════════════════════════════════════════════════
    REP & ADMIN SHARED CHROME
@@ -1957,19 +1958,18 @@ function focusRep(fbKey){
 //  GPS SESSION
 // ─────────────────────────────────────────────────────────────
 async function startSession(){
-  const repId=document.getElementById('gps-rep').value;
-  if(!repId){toast('Select a rep first.');return;}
-  if(sessions.find(s=>s.repId===repId&&!s.logoutTime)){toast('This rep is already logged in.');return;}
-
-  // Check today's itinerary for this rep
+  // Use logged rep ID directly — the hidden gps-rep select may not be populated yet
+  const repId=loggedRepId||(document.getElementById('gps-rep')?.value)||'';
+  if(!repId){toast('Could not identify rep. Please log out and log in again.');return;}
+  if(sessions.find(s=>s.repId===repId&&!s.logoutTime)){
+    toast('You are already logged in to a GPS session.');return;
+  }
+  // Check today's itinerary
   const todayStr=new Date().toISOString().slice(0,10);
-  const todayStops=itineraries.filter(x=>x.date===todayStr&&(x.repId===repId||x.repId===loggedRepId));
-
+  const todayStops=itineraries.filter(x=>x.date===todayStr&&x.repId===repId);
   if(todayStops.length>0){
-    // Has itinerary — show it as a summary before proceeding
     showItinModal(repId,todayStops,true);
   }else{
-    // No itinerary — prompt to set one or proceed anyway
     showItinModal(repId,[],false);
   }
 }
