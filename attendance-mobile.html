@@ -1207,7 +1207,8 @@ function startVerification() {
   if(!emp) { errEl.textContent = 'Employee not found.'; return; }
 
   if(!emp.photo) {
-    errEl.textContent = '⚠ No face photo on file. Ask admin to add your photo in the main ERP first.';
+    console.warn('No reference photo for', emp.name, '— fields present:', Object.keys(emp));
+    errEl.textContent = 'No face photo on file for ' + emp.name + '. Add it in the ERP under HR \u2192 Employees \u2192 Edit \u2192 Photo.';
     return;
   }
 
@@ -1219,14 +1220,28 @@ function startVerification() {
 // ══════════════════════════════════════════════════════════════════════
 // HOME SCREEN — clock in/out from home
 // ══════════════════════════════════════════════════════════════════════
+// Reports exactly why verification cannot start, and offers the override.
+function faceCheckBlocked(mode) {
+  if(!selectedEmp) { toast('No employee selected.','error'); return true; }
+  if(!selectedEmp.photo) {
+    console.warn('No reference photo for', selectedEmp.name, '— fields present:', Object.keys(selectedEmp));
+    const go = confirm('No face photo on file for ' + selectedEmp.name + '.\n\n' +
+      'Face verification needs a reference photo, added in the ERP under HR \u2192 Employees \u2192 Edit \u2192 Photo.\n\n' +
+      'Clock ' + (mode==='in'?'in':'out') + ' without verification for now?');
+    if(go) { clockMode = mode; manualClockOverride(); }
+    return true;
+  }
+  return false;
+}
+
 function goClockIn() {
-  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
+  if(faceCheckBlocked('in')) return;
   clockMode = 'in';
   openCamera();
 }
 
 function goClockOut() {
-  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
+  if(faceCheckBlocked('out')) return;
   clockMode = 'out';
   openCamera();
 }
@@ -1235,7 +1250,7 @@ function goClockOut() {
 // CAMERA
 // ══════════════════════════════════════════════════════════════════════
 async function manualClockOverride() {
-  if(!confirm(`Clock ${clockMode==='in'?'In':'Out'} without face verification?\n\nThis will be recorded as UNVERIFIED and flagged for admin review.`)) return;
+  if(cameraStream && !confirm(`Clock ${clockMode==='in'?'In':'Out'} without face verification?\n\nThis will be recorded as UNVERIFIED and flagged for admin review.`)) return;
   document.getElementById('cam-override')?.remove();
   window._verifyFailCount = 0;
   stopCamera();
@@ -1582,6 +1597,23 @@ async function recordAttendance(verified, confidence) {
 // ══════════════════════════════════════════════════════════════════════
 // The ERP stores each array as its own Firestore collection:
 //   anmol_data_attendance, anmol_data_leaves, anmol_data_payrolls, ...
+// Diagnostic — run checkFacePhotos() in the console
+async function checkFacePhotos() {
+  console.log('=== FACE PHOTO CHECK ===');
+  let list = [];
+  try { list = await erpRead('employees'); } catch(e) { console.warn(e.message); }
+  if(!list.length) { console.log('No employees in the ERP collection.'); return; }
+  let withPhoto = 0;
+  list.forEach(e => {
+    const has = !!e.photo;
+    if(has) withPhoto++;
+    console.log(`${String(e.name||e.id).padEnd(26)} photo:${has?'YES ('+Math.round(String(e.photo).length/1024)+'KB)':'MISSING'}  pin:${e.pin?'yes':'no'}`);
+  });
+  console.log(`\n${withPhoto} of ${list.length} employees have a reference photo.`);
+  if(!withPhoto) console.log('Face verification cannot work until photos are re-uploaded in the ERP (HR → Employees → Edit → Photo).');
+}
+window.checkFacePhotos = checkFacePhotos;
+
 // Strict record→employee matching (mirrors the ERP)
 function recordBelongsTo(rec, emp) {
   if(!rec || !emp) return false;
@@ -1665,346 +1697,32 @@ async function syncTimeoutToERP(mobileDocId, attId, timeOut, hours, ot, locTag, 
 // ══════════════════════════════════════════════════════════════════════
 // HOME SCREEN TABS
 // ══════════════════════════════════════════════════════════════════════
-function switchHomeTab(tab) {
-  ['attendance','payslips','leaves'].forEach(t=>{
-    document.getElementById('home-tab-'+t).style.display = t===tab?'block':'none';
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
-  });
-  if(tab==='payslips') renderMyPayslips();
-  if(tab==='leaves')   renderMyLeaves();
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // MY PAYSLIPS
 // ══════════════════════════════════════════════════════════════════════
 
-function printMyPayslip(p) {
-  const cp = { name:'ANMOL PHARMACEUTICALS US CORP.' };
-  const emp = selectedEmp||{};
-  const f=v=>`₱${(+(v||0)).toLocaleString('en-PH',{minimumFractionDigits:2})}`;
-  const w = window.open('','_blank','width=760,height=660');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Payslip</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:28px 36px;background:#fff}
-  .hdr{display:flex;justify-content:space-between;border-bottom:3px solid #111;padding-bottom:12px;margin-bottom:16px}
-  .co-name{font-size:15px;font-weight:800}
-  .slip-title{text-align:right}.slip-title h1{font-size:20px;font-weight:700}
-  .emp-block{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;background:#f7f7f5;padding:12px 14px;border-radius:6px;margin-bottom:16px;font-size:12px}
-  .lbl{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:0.06em}
-  .val{font-weight:600;font-size:13px}
-  table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:12px}
-  th{padding:6px 8px;background:#f0f0f0;border-bottom:1.5px solid #333;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;text-align:left}
-  td{padding:6px 8px;border-bottom:0.5px solid #ddd}td:last-child{text-align:right;font-weight:500}
-  .total-row td{font-weight:700;border-top:1.5px solid #333;border-bottom:none}
-  .net-box{background:#111;color:#fff;padding:12px 14px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin:16px 0}
-  .net-box .lbl{color:#aaa;font-size:10px}.net-box .val{font-size:22px;font-weight:700}
-  .sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-top:28px}
-  .sig{text-align:center;border-top:1px solid #333;padding-top:6px;font-size:10px}
-  @page{margin:12mm}@media print{body{padding:0}}
-</style></head><body>
-<div class="hdr">
-  <div><div class="co-name">${cp.name}</div><div style="font-size:11px;color:#555">Payslip · ${p.period||'—'}</div></div>
-  <div class="slip-title"><h1>PAYSLIP</h1><p style="font-size:12px;color:#555">${p.id} · Paid: ${p.payDate||'—'}</p></div>
-</div>
-<div class="emp-block">
-  <div><div class="lbl">Employee</div><div class="val">${emp.name||p.empName||'—'}</div></div>
-  <div><div class="lbl">Department</div><div class="val">${emp.department||'—'}</div></div>
-  <div><div class="lbl">Position</div><div class="val">${emp.position||'—'}</div></div>
-  <div><div class="lbl">SSS No.</div><div class="val">${emp.sssNo||'—'}</div></div>
-  <div><div class="lbl">PhilHealth No.</div><div class="val">${emp.philhealthNo||'—'}</div></div>
-  <div><div class="lbl">TIN</div><div class="val">${emp.tinNo||'—'}</div></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-<table><thead><tr><th colspan="2">Earnings</th></tr></thead><tbody>
-  <tr><td>Basic Pay</td><td>${f(p.basicPay)}</td></tr>
-  <tr><td>Overtime Pay</td><td>${f(p.overtime)}</td></tr>
-  <tr><td>Allowances</td><td>${f(p.allowance)}</td></tr>
-  <tr class="total-row"><td>Gross Pay</td><td>${f(p.grossPay)}</td></tr>
-</tbody></table>
-<table><thead><tr><th colspan="2">Deductions</th></tr></thead><tbody>
-  <tr><td>SSS</td><td>${f(p.sss)}</td></tr>
-  <tr><td>PhilHealth</td><td>${f(p.philhealth)}</td></tr>
-  <tr><td>Pag-IBIG</td><td>${f(p.pagibig)}</td></tr>
-  <tr><td>Withholding Tax</td><td>${f(p.withholdingTax)}</td></tr>
-  <tr class="total-row"><td>Total Deductions</td><td>${f(p.totalDeductions)}</td></tr>
-</tbody></table>
-</div>
-<div class="net-box">
-  <div><div class="lbl">Net Pay</div><div class="val">${f(p.netPay)}</div></div>
-  <div style="text-align:right"><div class="lbl">Status</div><div style="font-size:14px;font-weight:700;color:${p.status==='released'?'#34c98a':'#f5a623'}">${(p.status||'pending').toUpperCase()}</div></div>
-</div>
-<div class="sigs">
-  <div class="sig"><strong>${emp.name||'—'}</strong><br>Employee / Received by</div>
-  <div class="sig"><strong>__________________</strong><br>Prepared by</div>
-  <div class="sig"><strong>__________________</strong><br>Approved by</div>
-</div>
-<script>window.onload=()=>{window.print();}<\/script>
-</body></html>`);
-  w.document.close();
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // MY LEAVES
 // ══════════════════════════════════════════════════════════════════════
 
-function startVerification() {
-  const empId  = document.getElementById('emp-select').value;
-  const action = selectedAction || document.getElementById('action-select').value;
-  const errEl  = document.getElementById('login-err');
-  errEl.textContent = '';
-
-  if(!empId) { errEl.textContent = 'Please select your name.'; return; }
-
-  const emp = employees.find(e=>(e.id||e.name)===empId) || employees.find(e=>e.id===empId||e.name===empId);
-  if(!emp) { errEl.textContent = 'Employee not found.'; return; }
-
-  if(!emp.photo) {
-    errEl.textContent = '⚠ No face photo on file. Ask admin to add your photo in the main ERP first.';
-    return;
-  }
-
-  selectedEmp = emp;
-  clockMode   = action==='leave' ? 'in' : action;
-  openCamera();
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // HOME SCREEN — clock in/out from home
 // ══════════════════════════════════════════════════════════════════════
-function goClockIn() {
-  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
-  clockMode = 'in';
-  openCamera();
-}
 
-function goClockOut() {
-  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
-  clockMode = 'out';
-  openCamera();
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // CAMERA
 // ══════════════════════════════════════════════════════════════════════
-async function manualClockOverride() {
-  if(!confirm(`Clock ${clockMode==='in'?'In':'Out'} without face verification?\n\nThis will be recorded as UNVERIFIED and flagged for admin review.`)) return;
-  document.getElementById('cam-override')?.remove();
-  window._verifyFailCount = 0;
-  stopCamera();
-  await recordAttendance(false, 0);
-}
 
-function openCamera() {
-  window._verifyFailCount = 0;
-  window._countdownTimer = null;
 
-  // Set camera header
-  document.getElementById('cam-emp-name').textContent = selectedEmp?.name || '—';
-  document.getElementById('cam-action-label').textContent =
-    clockMode==='in' ? 'Clock In — Face Verification' : 'Clock Out — Face Verification';
 
-  // Reset UI
-  const oval = document.getElementById('face-oval');
-  oval.className = 'face-oval';
-  document.getElementById('cam-status').textContent = 'Position your face in the oval…';
-  const cdEl = document.getElementById('cam-countdown');
-  if(cdEl) cdEl.textContent = '';
-  const btn = document.getElementById('cam-btn');
-  if(btn) { btn.style.display='none'; btn.disabled=false; btn.onclick=captureAndVerify; }
-  document.getElementById('cam-override')?.remove();
-
-  updateCamLocUI();
-  showScreen('camera-screen');
-
-  navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode: 'user',
-      width:  { ideal: 1280 },
-      height: { ideal: 720 },
-    },
-    audio: false
-  }).then(stream => {
-    cameraStream = stream;
-    const video = document.getElementById('cam-video');
-    video.srcObject = stream;
-    // Start auto-verify countdown after camera is ready (1.5s for camera to focus)
-    setTimeout(startAutoVerifyCountdown, 1500);
-  }).catch(err => {
-    stopCamera();
-    toast('Camera error: ' + err.message, 'error');
-  });
-}
-
-function startAutoVerifyCountdown() {
-  const cdEl   = document.getElementById('cam-countdown');
-  const status = document.getElementById('cam-status');
-  if(!cdEl || !cameraStream) return;
-  let count = 3;
-  if(status) status.textContent = 'Hold still — verifying in…';
-  cdEl.textContent = count;
-  window._countdownTimer = setInterval(()=>{
-    count--;
-    if(count > 0) {
-      cdEl.textContent = count;
-    } else {
-      clearInterval(window._countdownTimer);
-      cdEl.textContent = '';
-      if(status) status.textContent = 'Verifying…';
-      captureAndVerify();
-    }
-  }, 1000);
-}
-
-function stopCamera() {
-  if(window._countdownTimer) { clearInterval(window._countdownTimer); window._countdownTimer=null; }
-  if(cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
-  if(selectedEmp) showScreen('home-screen');
-  else showScreen('login-screen');
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // CAPTURE & VERIFY
 // ══════════════════════════════════════════════════════════════════════
-async function captureAndVerify() {
-  const oval   = document.getElementById('face-oval');
-  const status = document.getElementById('cam-status');
-  const btn    = document.getElementById('cam-btn');
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Verifying…';
-  oval.className = 'face-oval scanning';
-  status.textContent = 'Checking liveness & matching face…';
-
-  try {
-    const video  = document.getElementById('cam-video');
-    const canvas = document.getElementById('cam-canvas');
-    const ctx    = canvas.getContext('2d');
-    // Match what the user sees: zoomed out to 65%, mirrored horizontally
-    const scale  = 0.65;
-    const sw     = video.videoWidth  * scale;
-    const sh     = video.videoHeight * scale;
-    const sx     = (video.videoWidth  - sw) / 2;
-    const sy     = (video.videoHeight - sh) / 2;
-    // Draw mirrored + cropped
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-    ctx.restore();
-    const liveBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-    const storedBase64 = selectedEmp.photo.includes(',')
-      ? selectedEmp.photo.split(',')[1]
-      : selectedEmp.photo;
-
-    // Call Claude AI via Cloudflare Worker
-    const res = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 120,
-        messages: [{
-          role: 'user',
-          content: [
-            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:storedBase64 } },
-            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:liveBase64   } },
-            { type:'text', text:`You are a lenient biometric attendance verification system for a small business.
-
-IMAGE 1: Employee reference photo (may be low quality, old, or taken in different lighting)
-IMAGE 2: Live camera capture (real person trying to clock in)
-
-LIVENESS CHECK: Is Image 2 a real live person? Answer LIVE unless you clearly see a flat printed photo, phone screen, or obvious spoof. When in doubt, assume LIVE.
-
-IDENTITY MATCH: Compare permanent facial features — bone structure, eye spacing, nose shape. IGNORE lighting, angle (up to 45 degrees), expression, blur, hairstyle, glasses, age differences. Be GENEROUS — same person looks very different in different photos. If there is any reasonable chance it is the same person, say MATCH.
-
-Reply ONLY in this exact format:
-LIVENESS: LIVE
-MATCH: MATCH 80%
-
-or
-
-LIVENESS: LIVE
-MATCH: NO_MATCH 30%`
-            }
-          ]
-        }]
-      })
-    });
-
-    const data  = await res.json();
-    const reply = (data.content||[]).map(b=>b.text||'').join('').trim().toUpperCase();
-    console.log('AI reply:', reply);
-
-    const isLive  = reply.includes('LIVENESS: LIVE') || (!reply.includes('LIVENESS: SPOOF') && reply.includes('MATCH'));
-    const isSpoof = reply.includes('LIVENESS: SPOOF');
-    const isMatch = reply.includes('MATCH: MATCH');
-    const pct     = parseInt((reply.match(/(\d+)%/)||[0,0])[1]) || 0;
-
-    if(isSpoof) {
-      oval.className = 'face-oval spoof';
-      status.textContent = '⚠️ Spoof detected — use your real live face';
-      btn.className = 'cam-btn spoof';
-      btn.innerHTML = '<i class="ti ti-refresh"></i>Try Again';
-      btn.disabled  = false;
-      btn.onclick   = captureAndVerify;
-      return;
-    }
-
-    if(isMatch && pct >= 45) {
-      // ✅ SUCCESS
-      oval.className = 'face-oval success';
-      status.textContent = `✅ Verified — ${pct}% match`;
-      btn.className = 'cam-btn success';
-      btn.innerHTML = `<i class="ti ti-check"></i>Confirmed`;
-      await new Promise(r=>setTimeout(r,1000));
-      stopCamera();
-      await recordAttendance(true, pct);
-    } else {
-      // ❌ NO MATCH or low confidence
-      window._verifyFailCount = (window._verifyFailCount||0) + 1;
-      oval.className = 'face-oval fail';
-      status.textContent = `❌ Not recognized (${pct}%). Reposition and hold still…`;
-      const cdEl2 = document.getElementById('cam-countdown');
-
-      // After 3 failed attempts — show manual override button
-      if(window._verifyFailCount >= 3) {
-        if(cdEl2) cdEl2.textContent = '';
-        const btn2 = document.getElementById('cam-btn');
-        if(btn2) { btn2.style.display='block'; btn2.innerHTML='<i class="ti ti-refresh"></i>Try Again'; btn2.disabled=false; btn2.onclick=()=>{window._verifyFailCount=0;startAutoVerifyCountdown();}; }
-        const existing = document.getElementById('cam-override');
-        if(!existing) {
-          const ob = document.createElement('div');
-          ob.id = 'cam-override';
-          ob.style.cssText = 'margin-top:14px;text-align:center';
-          ob.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px">Still having trouble?</div>
-          <button onclick="manualClockOverride()" style="padding:10px 24px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);border-radius:10px;color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">
-            <i class="ti ti-clock-play" style="margin-right:6px"></i>Clock ${clockMode==='in'?'In':'Out'} Without Verification
-          </button>`;
-          document.querySelector('.cam-controls')?.appendChild(ob);
-        }
-      } else {
-        // Auto-retry after 2 seconds
-        if(cdEl2) cdEl2.textContent = '';
-        status.textContent = `❌ Not recognized (${pct}%). Retrying in 2s…`;
-        setTimeout(()=>{
-          if(!cameraStream) return;
-          oval.className = 'face-oval';
-          status.textContent = 'Hold still — verifying in…';
-          startAutoVerifyCountdown();
-        }, 2000);
-      }
-    }
-
-  } catch(err) {
-    oval.className = 'face-oval fail';
-    status.textContent = 'Verification failed: ' + err.message;
-    btn.className = 'cam-btn fail';
-    btn.innerHTML = '<i class="ti ti-refresh"></i>Try Again';
-    btn.disabled  = false;
-    btn.onclick   = captureAndVerify;
-  }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // RECORD ATTENDANCE
@@ -2311,15 +2029,6 @@ async function submitLeave() {
   }
 }
 
-function doLogout() {
-  selectedEmp  = null;
-  todayRecord  = null;
-  clockMode    = 'in';
-  document.getElementById('emp-select').value    = '';
-  document.getElementById('action-select').value = 'in';
-  document.getElementById('login-err').textContent = '';
-  showScreen('login-screen');
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // START
