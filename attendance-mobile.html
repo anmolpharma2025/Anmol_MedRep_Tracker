@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PharmaHub">
+<meta name="theme-color" content="#0a0f1e">
+<title>PharmaHub — Employee Portal</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#0a0f1e;--bg2:#0f1729;--card:#151f35;--card2:#1a2540;
+  --border:#1e2d4a;--border2:#253352;
+  --accent:#3b82f6;--accent2:#60a5fa;
+  --green:#10b981;--green2:#34d399;
+  --red:#ef4444;--amber:#f59e0b;--purple:#8b5cf6;
+  --text:#f0f4ff;--text2:#8fa8d0;--text3:#3d5275;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  --r:16px;--r-sm:10px;--r-xs:6px;
+  --shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
+body{display:flex;flex-direction:column;height:100dvh}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;height:100dvh;overflow:hidden}
+.screen.active{display:flex}
+
+/* ── PIN ── */
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:transparent;transition:all 0.15s}
+.pin-dot.filled{background:#fff;border-color:#fff;transform:scale(1.1)}
+.pin-dot.error{border-color:#f87171;background:#f87171}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:0 auto}
+.pin-key{padding:18px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:14px;color:#fff;font-size:22px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.12s;-webkit-tap-highlight-color:transparent}
+.pin-key:active{background:rgba(255,255,255,0.2);transform:scale(0.94)}
+/* ── TABS ── */
+.home-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.2);flex-shrink:0}
+.home-tab{flex:1;padding:12px 6px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s}
+.home-tab.active{color:#fff;border-bottom-color:var(--blue)}
+.home-tab i{display:block;font-size:18px;margin-bottom:3px}
+/* ── PAYSLIP CARD ── */
+.payslip-card{margin:12px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:18px;overflow:hidden}
+.payslip-card-hdr{padding:14px 16px;background:rgba(79,142,247,0.15);display:flex;justify-content:space-between;align-items:center}
+.payslip-period{font-size:13px;font-weight:700;color:#fff}
+.payslip-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px}
+.payslip-status.released{background:rgba(52,201,138,0.25);color:#34c98a}
+.payslip-status.pending{background:rgba(245,166,35,0.25);color:#f5a623}
+.payslip-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.payslip-item label{font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.4);display:block;margin-bottom:3px}
+.payslip-item .val{font-size:14px;font-weight:700;color:#fff}
+.payslip-item .val.grn{color:#34c98a}
+.payslip-item .val.red{color:#f05c6e}
+.payslip-net{padding:12px 16px;background:rgba(52,201,138,0.1);border-top:1px solid rgba(52,201,138,0.2);display:flex;justify-content:space-between;align-items:center}
+.payslip-print{padding:6px 14px;background:rgba(79,142,247,0.2);border:1px solid rgba(79,142,247,0.4);border-radius:99px;color:var(--blue);font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer}
+/* ── LEAVE CARDS ── */
+.leave-card{margin:8px 16px;padding:14px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px}
+.leave-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.leave-type{font-size:13px;font-weight:700;color:#fff}
+.leave-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px}
+.leave-badge.pending{background:rgba(245,166,35,0.2);color:#f5a623}
+.leave-badge.approved{background:rgba(52,201,138,0.2);color:#34c98a}
+.leave-badge.rejected{background:rgba(240,92,110,0.2);color:#f05c6e}
+.leave-dates{font-size:12px;color:rgba(255,255,255,0.5)}
+#login-screen{
+  background:linear-gradient(160deg,#0a0f1e 0%,#0d1630 50%,#0a1525 100%);
+  align-items:stretch;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom)
+}
+.login-bg{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none
+}
+.login-bg::before{
+  content:'';position:absolute;top:-20%;left:-20%;width:140%;height:70%;
+  background:radial-gradient(ellipse at 60% 40%,rgba(59,130,246,0.12) 0%,transparent 70%);
+}
+.login-logo-wrap{
+  position:absolute;top:0;left:0;right:0;
+  padding-top:calc(env(safe-area-inset-top) + 48px);
+  display:flex;flex-direction:column;align-items:center;gap:12px
+}
+.login-logo{
+  width:64px;height:64px;border-radius:18px;
+  background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 40px rgba(59,130,246,0.4)
+}
+.login-logo i{font-size:32px;color:#fff}
+.login-company{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.12em}
+.login-tagline{font-size:22px;font-weight:700;color:var(--text);margin-top:-4px}
+
+.login-sheet{
+  background:var(--card);border-radius:28px 28px 0 0;
+  padding:28px 24px calc(env(safe-area-inset-bottom) + 28px);
+  border-top:1px solid var(--border2);
+  position:relative;z-index:1
+}
+.login-sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:99px;margin:0 auto 24px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.sheet-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px}
+.field select,.field input{
+  width:100%;padding:14px 16px;
+  background:var(--bg2);border:1.5px solid var(--border2);
+  border-radius:var(--r-sm);color:var(--text);
+  font-size:15px;font-family:var(--font);outline:none;
+  -webkit-appearance:none;appearance:none
+}
+.field select:focus,.field input:focus{border-color:var(--accent)}
+.select-wrap{position:relative}
+.select-wrap::after{
+  content:'\ea6c';font-family:'tabler-icons';
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  color:var(--text2);font-size:16px;pointer-events:none
+}
+.btn-main{
+  width:100%;padding:17px;border:none;border-radius:var(--r-sm);
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  color:#fff;font-size:16px;font-weight:700;cursor:pointer;
+  font-family:var(--font);letter-spacing:0.02em;
+  box-shadow:0 4px 24px rgba(59,130,246,0.35);margin-top:6px
+}
+.btn-main:active{opacity:0.88;transform:scale(0.98)}
+.btn-main:disabled{opacity:0.45}
+.action-choice-btn{background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 10px;color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;text-align:center;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.action-choice-btn.leave-btn{flex-direction:row;padding:14px 16px}
+.action-choice-btn#choice-in.selected{background:rgba(52,201,138,0.12);border-color:#34c98a;box-shadow:0 0 0 2px rgba(52,201,138,0.2)}
+.action-choice-btn#choice-out.selected{background:rgba(240,92,110,0.12);border-color:#f05c6e;box-shadow:0 0 0 2px rgba(240,92,110,0.2)}
+.action-choice-btn#choice-leave.selected{background:rgba(167,139,250,0.12);border-color:#a78bfa;box-shadow:0 0 0 2px rgba(167,139,250,0.2)}
+.login-err{min-height:18px;font-size:12px;color:var(--red);text-align:center;margin-top:10px}
+
+/* ── CAMERA SCREEN ── */
+#camera-screen{background:#000;position:relative}
+#cam-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;
+  transform:scaleX(-1);
+  transform-origin:center center;
+  background:#000
+}
+#cam-canvas{display:none}
+.cam-top{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding:calc(env(safe-area-inset-top)+12px) 16px 16px;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent);
+  display:flex;align-items:center;gap:10px
+}
+.cam-back{background:rgba(255,255,255,0.1);border:none;width:38px;height:38px;border-radius:50%;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cam-back:active{background:rgba(255,255,255,0.2)}
+.cam-top-info{flex:1}
+.cam-top-name{color:#fff;font-size:15px;font-weight:700}
+.cam-top-sub{color:rgba(255,255,255,0.65);font-size:12px;margin-top:1px}
+
+.cam-overlay{
+  position:absolute;inset:0;z-index:5;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding-top:80px;gap:20px
+}
+/* Face oval — fills most of screen width on mobile */
+.face-oval-wrap{position:relative;width:min(80vw,340px);height:min(96vw,408px)}
+.face-oval{
+  width:100%;height:100%;border-radius:50%;
+  border:3px solid rgba(255,255,255,0.5);
+  position:relative;overflow:hidden
+}
+.face-oval.scanning{border-color:var(--accent);border-width:3px;box-shadow:0 0 0 6px rgba(59,130,246,0.18)}
+.face-oval.success{border-color:var(--green);border-width:3px;box-shadow:0 0 0 6px rgba(16,185,129,0.2)}
+.face-oval.fail{border-color:var(--red);border-width:3px;box-shadow:0 0 0 6px rgba(239,68,68,0.2)}
+.face-oval.spoof{border-color:var(--amber);border-width:3px;box-shadow:0 0 0 6px rgba(245,158,11,0.2)}
+
+/* Corner brackets */
+.face-oval-wrap::before,.face-oval-wrap::after{
+  content:'';position:absolute;width:40px;height:40px;
+  border-color:var(--accent);border-style:solid;
+}
+.face-oval-wrap::before{top:12px;left:12px;border-width:4px 0 0 4px;border-radius:8px 0 0 0}
+.face-oval-wrap::after{top:12px;right:12px;border-width:4px 4px 0 0;border-radius:0 8px 0 0}
+
+@keyframes scanline{0%{top:0}100%{top:100%}}
+.scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(to right,transparent,var(--accent),transparent);
+  animation:scanline 2s linear infinite;display:none
+}
+.face-oval.scanning .scan-line{display:block}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:spin 0.75s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+
+.cam-status-pill{
+  background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);
+  padding:10px 22px;border-radius:99px;
+  color:#fff;font-size:14px;font-weight:500;text-align:center;max-width:90vw
+}
+
+.cam-btn{
+  padding:17px 40px;border:none;border-radius:99px;
+  font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font);
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 24px rgba(0,0,0,0.5)
+}
+.cam-btn.default{background:var(--accent);color:#fff}
+.cam-btn.success{background:var(--green);color:#fff}
+.cam-btn.fail{background:var(--red);color:#fff}
+.cam-btn.spoof{background:var(--amber);color:#000}
+.cam-btn:disabled{opacity:0.45;pointer-events:none}
+.cam-btn:active{opacity:0.85;transform:scale(0.97)}
+
+/* Location pill inside camera */
+.loc-pill{
+  position:absolute;bottom:calc(env(safe-area-inset-bottom)+140px);left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+  border-radius:99px;padding:7px 16px;
+  display:flex;align-items:center;gap:6px;font-size:12px;color:#fff;white-space:nowrap;
+  border:1px solid rgba(255,255,255,0.12);z-index:10
+}
+.loc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.loc-dot.office{background:var(--green)}
+.loc-dot.outside{background:var(--amber)}
+.loc-dot.unknown{background:var(--text2)}
+
+/* ── HOME SCREEN ── */
+#home-screen{background:var(--bg);overflow-y:auto}
+.home-header{
+  background:linear-gradient(160deg,var(--card2),var(--bg2));
+  padding:calc(env(safe-area-inset-top)+20px) 20px 28px;
+  border-bottom:1px solid var(--border)
+}
+.home-header-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.home-avatar{
+  width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;
+  color:#fff;flex-shrink:0;overflow:hidden
+}
+.home-avatar img{width:100%;height:100%;object-fit:cover}
+.home-info{flex:1}
+.home-greeting{font-size:12px;color:var(--text2);margin-bottom:2px}
+.home-name{font-size:18px;font-weight:700}
+.home-dept{font-size:12px;color:var(--accent);margin-top:2px}
+.logout-icon{background:rgba(255,255,255,0.06);border:1px solid var(--border2);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2)}
+
+/* Status card */
+.status-card{
+  margin:16px;padding:18px 20px;
+  background:var(--card);border-radius:var(--r);border:1px solid var(--border)
+}
+.status-top{display:flex;justify-content:space-between;align-items:flex-start}
+.status-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-weight:600}
+.status-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px}
+.status-badge.present{background:rgba(16,185,129,0.15);color:var(--green)}
+.status-badge.absent{background:rgba(100,120,160,0.12);color:var(--text2)}
+.status-badge.done{background:rgba(59,130,246,0.15);color:var(--accent2)}
+.status-time{font-size:32px;font-weight:800;margin:8px 0 4px;letter-spacing:-0.02em}
+.status-time.muted{color:var(--text3);font-size:22px;font-weight:400}
+.time-row{display:flex;gap:10px;margin-top:12px}
+.time-box{flex:1;background:var(--bg2);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border)}
+.time-box-label{font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em}
+.time-box-val{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.time-box-val.muted{color:var(--text3);font-weight:400;font-size:14px}
+
+/* Location card */
+.loc-card{
+  margin:0 16px 16px;padding:13px 16px;
+  background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);
+  display:flex;align-items:center;gap:10px
+}
+.loc-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.loc-icon.office{background:rgba(16,185,129,0.15)}
+.loc-icon.office i{color:var(--green)}
+.loc-icon.outside{background:rgba(245,158,11,0.15)}
+.loc-icon.outside i{color:var(--amber)}
+.loc-icon.unknown{background:rgba(100,120,160,0.1)}
+.loc-icon.unknown i{color:var(--text2)}
+.loc-info{flex:1}
+.loc-status{font-size:13px;font-weight:600}
+.loc-detail{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* Action buttons */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 16px 20px}
+.action-btn{
+  background:var(--card);border:1.5px solid var(--border2);
+  border-radius:var(--r);padding:18px 14px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:transform 0.1s,background 0.1s
+}
+.action-btn:active{transform:scale(0.96);background:var(--card2)}
+.action-btn.disabled{opacity:0.35;pointer-events:none}
+.action-btn .icon{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.action-btn .icon i{font-size:22px}
+.action-btn.in .icon{background:rgba(16,185,129,0.15)}
+.action-btn.in .icon i{color:var(--green)}
+.action-btn.out .icon{background:rgba(239,68,68,0.15)}
+.action-btn.out .icon i{color:var(--red)}
+.action-btn .label{font-size:13px;font-weight:700}
+.action-btn .sub{font-size:11px;color:var(--text2);text-align:center}
+
+/* Records section */
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:4px 16px 10px;padding-top:4px
+}
+.section-head h3{font-size:14px;font-weight:700;color:var(--text)}
+.section-head span{font-size:12px;color:var(--text2)}
+.rec-list{padding:0 16px 32px;display:flex;flex-direction:column;gap:8px}
+.rec-item{
+  background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);
+  padding:13px 15px;display:flex;gap:12px;align-items:center
+}
+.rec-date-col{min-width:44px;text-align:center}
+.rec-day{font-size:20px;font-weight:800;line-height:1}
+.rec-month{font-size:10px;color:var(--text2);text-transform:uppercase;margin-top:2px}
+.rec-divider{width:1px;background:var(--border);flex-shrink:0;align-self:stretch}
+.rec-details{flex:1}
+.rec-name-row{display:flex;justify-content:space-between;align-items:center}
+.rec-times{font-size:12px;color:var(--text2);margin-top:3px;display:flex;gap:12px}
+.rec-loc{font-size:11px;color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:4px}
+.rec-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px}
+.rec-badge.present{background:rgba(16,185,129,0.15);color:var(--green2)}
+.rec-badge.absent{background:rgba(100,120,160,0.1);color:var(--text2)}
+.rec-badge.leave{background:rgba(245,158,11,0.15);color:var(--amber)}
+.rec-verified{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--green);margin-top:3px}
+.rec-empty{text-align:center;padding:40px 20px;color:var(--text2);font-size:13px}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:calc(env(safe-area-inset-bottom)+20px);
+  left:16px;right:16px;z-index:999;
+  padding:14px 18px;border-radius:var(--r-sm);
+  font-size:14px;font-weight:600;
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;
+  animation:toastIn 0.3s ease
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.toast.success{background:var(--green);color:#fff}
+.toast.error{background:var(--red);color:#fff}
+.toast.info{background:var(--accent);color:#fff}
+.toast.warning{background:var(--amber);color:#000}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div class="screen active" id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-logo-wrap">
+    <div class="login-logo"><i class="ti ti-pill"></i></div>
+    <div class="login-company">PharmaHub</div>
+    <div class="login-tagline">Anmol Pharmaceuticals</div>
+  </div>
+  <div class="login-sheet">
+    <div class="login-sheet-handle"></div>
+
+    <!-- STEP 1: Select employee -->
+    <div id="login-step1">
+      <div class="sheet-title">Welcome</div>
+      <div class="sheet-sub">Select your name to continue</div>
+      <div class="field">
+        <label>Select Your Name</label>
+        <div class="select-wrap">
+          <select id="emp-select" onchange="onEmpSelected()">
+            <option value="">— Loading employees… —</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-main" onclick="proceedToPin()" style="margin-top:8px">
+        <i class="ti ti-arrow-right" style="margin-right:8px"></i>Continue
+      </button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+
+    <!-- STEP 2: PIN entry -->
+    <div id="login-step2" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="backToStep1()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px"><i class="ti ti-arrow-left" style="font-size:18px"></i></button>
+        <div>
+          <div class="sheet-title" style="margin-bottom:0" id="pin-emp-name">—</div>
+          <div class="sheet-sub" style="margin-top:2px">Enter your 4-digit PIN</div>
+        </div>
+      </div>
+
+      <!-- PIN dots display -->
+      <div style="display:flex;gap:14px;justify-content:center;margin-bottom:24px">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+
+      <!-- PIN keypad -->
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <div></div>
+        <button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key" onclick="pinKey('⌫')" style="font-size:18px">⌫</button>
+      </div>
+
+      <div id="pin-err" style="text-align:center;font-size:12px;color:#f87171;margin-top:12px;min-height:20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CAMERA SCREEN ══ -->
+<div class="screen" id="camera-screen">
+  <video id="cam-video" autoplay playsinline muted></video>
+  <canvas id="cam-canvas" width="640" height="640"></canvas>
+
+  <div class="cam-top">
+    <button class="cam-back" onclick="stopCamera()"><i class="ti ti-arrow-left"></i></button>
+    <div class="cam-top-info">
+      <div class="cam-top-name" id="cam-emp-name">—</div>
+      <div class="cam-top-sub" id="cam-action-label">Face Verification</div>
+    </div>
+  </div>
+
+  <div class="cam-overlay">
+    <div class="face-oval-wrap">
+      <div class="face-oval" id="face-oval">
+        <div class="scan-line"></div>
+      </div>
+    </div>
+    <div class="cam-status-pill" id="cam-status">Center your face in the oval</div>
+    <div id="cam-countdown" style="font-size:32px;font-weight:800;color:#fff;text-align:center;margin-top:16px;text-shadow:0 2px 12px rgba(0,0,0,0.6);min-height:44px"></div>
+    <div class="cam-controls" style="margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:10px">
+      <button class="cam-btn default" id="cam-btn" onclick="captureAndVerify()" style="display:none">
+        <i class="ti ti-camera"></i>Verify Now
+      </button>
+    </div>
+  </div>
+
+  <div class="loc-pill" id="loc-pill">
+    <div class="loc-dot unknown" id="loc-dot"></div>
+    <span id="loc-text">Getting location…</span>
+  </div>
+</div>
+
+<!-- ══ HOME SCREEN ══ -->
+<div class="screen" id="home-screen">
+  <!-- Header -->
+  <div class="home-header">
+    <div class="home-header-row">
+      <div class="home-avatar" id="home-avatar">?</div>
+      <div class="home-info">
+        <div class="home-greeting" id="home-greeting">Good morning</div>
+        <div class="home-name" id="home-name">—</div>
+        <div class="home-dept" id="home-dept">—</div>
+      </div>
+      <div class="logout-icon" onclick="doLogout()" title="Back to login">
+        <i class="ti ti-logout" style="font-size:17px"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="home-tabs">
+    <div class="home-tab active" id="tab-attendance" onclick="switchHomeTab('attendance')">
+      <i class="ti ti-clock"></i>Attendance
+    </div>
+    <div class="home-tab" id="tab-payslips" onclick="switchHomeTab('payslips')">
+      <i class="ti ti-cash"></i>Payslips
+    </div>
+    <div class="home-tab" id="tab-leaves" onclick="switchHomeTab('leaves')">
+      <i class="ti ti-beach"></i>Leave
+    </div>
+  </div>
+
+  <!-- Tab contents -->
+  <div style="overflow-y:auto;flex:1">
+
+    <!-- ATTENDANCE TAB -->
+    <div id="home-tab-attendance">
+      <!-- Today status -->
+      <div class="status-card">
+        <div class="status-top">
+          <div class="status-label">Today's Attendance</div>
+          <span class="status-badge absent" id="today-badge">Not Recorded</span>
+        </div>
+        <div class="status-time muted" id="today-timein-big">—</div>
+        <div class="time-row">
+          <div class="time-box">
+            <div class="time-box-label">Time In</div>
+            <div class="time-box-val muted" id="today-in">—</div>
+          </div>
+          <div class="time-box">
+            <div class="time-box-label">Time Out</div>
+            <div class="time-box-val muted" id="today-out">—</div>
+          </div>
+          <div class="time-box">
+            <div class="time-box-label">Hours</div>
+            <div class="time-box-val muted" id="today-hours">—</div>
+          </div>
+        </div>
+      </div>
+      <!-- Location -->
+      <div class="loc-card" id="loc-card">
+        <div class="loc-icon unknown" id="home-loc-icon"><i class="ti ti-map-pin"></i></div>
+        <div class="loc-info">
+          <div class="loc-status" id="home-loc-status">Checking location…</div>
+          <div class="loc-detail" id="home-loc-detail">Please allow location access</div>
+        </div>
+      </div>
+      <!-- Clock In / Out -->
+      <div class="action-row">
+        <div class="action-btn in" id="btn-in" onclick="goClockIn()">
+          <div class="icon"><i class="ti ti-clock-play"></i></div>
+          <div class="label">Clock In</div>
+          <div class="sub">Face verification</div>
+        </div>
+        <div class="action-btn out" id="btn-out" onclick="goClockOut()">
+          <div class="icon"><i class="ti ti-clock-stop"></i></div>
+          <div class="label">Clock Out</div>
+          <div class="sub">End your shift</div>
+        </div>
+      </div>
+      <!-- Attendance History -->
+      <div class="section-head">
+        <h3>Attendance History</h3>
+        <span id="rec-count">—</span>
+      </div>
+      <div class="rec-list" id="rec-list">
+        <div class="rec-empty">Loading records…</div>
+      </div>
+    </div>
+
+    <!-- PAYSLIPS TAB -->
+    <div id="home-tab-payslips" style="display:none">
+      <div style="padding:16px 16px 8px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:15px;font-weight:700;color:#fff">My Payslips</div>
+        <div id="payslip-count" style="font-size:12px;color:rgba(255,255,255,0.4)"></div>
+      </div>
+      <div id="payslip-list">
+        <div class="rec-empty" style="padding:40px 20px;text-align:center;color:rgba(255,255,255,0.3)">Loading payslips…</div>
+      </div>
+    </div>
+
+    <!-- LEAVE TAB -->
+    <div id="home-tab-leaves" style="display:none">
+      <div style="padding:16px 16px 8px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:15px;font-weight:700;color:#fff">My Leaves</div>
+        <button onclick="showLeaveModal()" style="padding:8px 16px;background:rgba(167,139,250,0.2);border:1px solid rgba(167,139,250,0.4);border-radius:99px;color:#a78bfa;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer">
+          <i class="ti ti-plus" style="margin-right:4px"></i>File Leave
+        </button>
+      </div>
+      <div id="leave-list">
+        <div class="rec-empty" style="padding:40px 20px;text-align:center;color:rgba(255,255,255,0.3)">Loading leave records…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+  <div id="leave-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center">
+    <div style="background:#0d1b2a;border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+      <div style="width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 20px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="font-size:18px;font-weight:800;color:#fff"><i class="ti ti-calendar-plus" style="margin-right:8px;color:#a78bfa"></i>Leave Application</div>
+        <button onclick="hideLeaveModal()" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- Employee selector (shown from login screen when not yet selected) -->
+        <div>
+          <label style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">Your Name <span style="color:#f87171">*</span></label>
+          <select id="leave-emp-select" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(167,139,250,0.5);border-radius:12px;color:#fff;font-size:14px;font-family:var(--font);outline:none;-webkit-appearance:none">
+            <option value="">— Select your name —</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">Leave Type</label>
+          <select id="leave-type" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;font-family:var(--font);outline:none;-webkit-appearance:none">
+            <option value="sick">Sick Leave</option>
+            <option value="vacation">Vacation Leave</option>
+            <option value="emergency">Emergency Leave</option>
+            <option value="maternity">Maternity Leave</option>
+            <option value="paternity">Paternity Leave</option>
+            <option value="solo_parent">Solo Parent Leave</option>
+            <option value="unpaid">Unpaid Leave</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">Date From</label>
+            <input type="date" id="leave-from" style="width:100%;padding:13px 10px;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);border-radius:12px;color:#fff;font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;color-scheme:dark;-webkit-text-fill-color:#fff">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">Date To</label>
+            <input type="date" id="leave-to" style="width:100%;padding:13px 10px;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);border-radius:12px;color:#fff;font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;color-scheme:dark;-webkit-text-fill-color:#fff">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">Reason / Details</label>
+          <textarea id="leave-reason" rows="3" placeholder="Briefly describe the reason for your leave…" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;font-family:var(--font);outline:none;resize:none;box-sizing:border-box"></textarea>
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px">With Pay?</label>
+          <div style="display:flex;gap:10px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#fff;cursor:pointer">
+              <input type="radio" name="leave-pay" value="yes" checked style="accent-color:#a78bfa"> With Pay
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#fff;cursor:pointer">
+              <input type="radio" name="leave-pay" value="no" style="accent-color:#a78bfa"> Without Pay
+            </label>
+          </div>
+        </div>
+
+        <div id="leave-err" style="display:none;padding:10px 14px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:10px;font-size:13px;color:#ff6b6b"></div>
+
+        <button onclick="submitLeave()" id="leave-submit-btn" style="padding:15px;background:linear-gradient(135deg,#a78bfa,#7c3aed);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);width:100%">
+          <i class="ti ti-send" style="margin-right:8px"></i>Submit Leave Application
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Leave Application Modal -->
+
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════
+let db = null;
+const FB_CONFIG = {
+  apiKey: "AIzaSyCtApiphcSMdEo-hmIkefIeQGvmusG2B6M",
+  authDomain: "anmol-accounting.firebaseapp.com",
+  projectId: "anmol-accounting",
+  storageBucket: "anmol-accounting.firebasestorage.app",
+  messagingSenderId: "838744686940",
+  appId: "1:838744686940:web:28d9b95c27031abf794199"
+};
+const WORKER_URL = 'https://lucky-wood-fa33.anmolpharma2025.workers.dev/';
+
+// Office coordinates — UPDATE THESE to your actual office location
+// Office coordinates — loaded dynamically from Firebase company profile
+let OFFICE_LAT    = 10.3157;   // fallback default
+let OFFICE_LNG    = 123.8854;  // fallback default
+let OFFICE_RADIUS_M = 200;     // fallback default
+
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+let employees    = [];
+let selectedEmp  = null;
+let clockMode    = 'in';   // 'in' | 'out'
+let cameraStream = null;
+let currentLocation = null;  // { lat, lng, accuracy, label, inOffice }
+let todayRecord  = null;
+
+// ══════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════
+const today    = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const timeNow  = () => new Date().toTimeString().slice(0,5);
+const greeting = () => { const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; };
+const fmt      = n => n ? (+n).toFixed(2) : '—';
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+function toast(msg, type='info', ms=3500) {
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="ti ti-${type==='success'?'check':type==='error'?'x':type==='warning'?'alert-triangle':'info-circle'}"></i><span>${msg}</span>`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), ms);
+}
+
+// Haversine distance in meters
+function distanceM(lat1, lng1, lat2, lng2) {
+  const R=6371000, toR=d=>d*Math.PI/180;
+  const dLat=toR(lat2-lat1), dLng=toR(lng2-lng1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════════════════════════════════
+function initFirebase() {
+  if(typeof firebase === 'undefined') { setTimeout(initFirebase,100); return; }
+  try {
+    if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    db = firebase.firestore();
+  // Silent anonymous auth — secures Firestore rules
+  try {
+    const auth = firebase.auth();
+    auth.onAuthStateChanged(user => {
+      if(!user) auth.signInAnonymously().catch(e=>console.warn('Anon auth:', e));
+    });
+  } catch(e) {}
+
+    console.log('Firebase ready');
+    loadOfficeCoords(); // Load office GPS coords from company profile
+    loadEmployees();
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Firebase error: ' + e.message;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// LOAD EMPLOYEES from Firebase
+// ══════════════════════════════════════════════════════════════════════
+async function loadOfficeCoords() {
+  try {
+    const snap = await db.doc('companies/anmol_meta').get();
+    if(snap.exists) {
+      const company = snap.data()?.company || {};
+      if(company.officeLat)    OFFICE_LAT      = parseFloat(company.officeLat);
+      if(company.officeLng)    OFFICE_LNG      = parseFloat(company.officeLng);
+      if(company.officeRadius) OFFICE_RADIUS_M = parseInt(company.officeRadius);
+    }
+  } catch(e) { console.warn('Could not load office coords:', e); }
+}
+
+async function loadEmployees() {
+  const sel = document.getElementById('emp-select');
+  const err = document.getElementById('login-err');
+  try {
+    let empList = [];
+
+    // 1. Preferred source — the ERP's live employees collection
+    try {
+      empList = await erpRead('employees');
+      if(empList.length) console.log('Loaded ' + empList.length + ' employees from ERP collection');
+    } catch(e) { console.warn('Collection read failed:', e.message); }
+
+    // 2. Fall back to the legacy single-document format
+    if(!empList.length) {
+      try {
+        const doc = await db.doc('companies/anmol').get();
+        const raw = doc.exists ? doc.data().data : null;
+        if(raw) {
+          const erpState = JSON.parse(raw);
+          empList = erpState.employees || [];
+          if(empList.length) console.log('Loaded ' + empList.length + ' employees from legacy document');
+        }
+      } catch(e) { console.warn('Legacy read failed:', e.message); }
+    }
+
+    if(!empList.length)
+      throw new Error('No employees found. Open the ERP and save any change to sync them.');
+
+    employees = empList.filter(e => e && e.name && e.status !== 'inactive');
+    if(!employees.length)
+      throw new Error('Employees were found but all are marked inactive.');
+
+    employees.sort((a,b) => String(a.name).localeCompare(String(b.name)));
+
+    const escAttr = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    sel.innerHTML = '<option value="">— Select your name —</option>' +
+      employees.map(e =>
+        `<option value="${escAttr(e.id||e.name)}">${escAttr(e.name)}${e.department?' — '+escAttr(e.department):''}</option>`
+      ).join('');
+    if(err) err.textContent = '';
+
+    const withPin = employees.filter(e => e.pin).length;
+    console.log(`${employees.length} active employees, ${withPin} with a PIN set`);
+    if(!withPin && err)
+      err.textContent = 'No employee has a PIN yet. Set one in the ERP under HR → Employees.';
+
+    startGeolocation();
+  } catch(e) {
+    sel.innerHTML = '<option value="">— Could not load employees —</option>';
+    if(err) err.textContent = e.message;
+    console.error('loadEmployees:', e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// GEOLOCATION
+// ══════════════════════════════════════════════════════════════════════
+function startGeolocation() {
+  if(!navigator.geolocation) {
+    currentLocation = { inOffice: null, label: 'Location not supported' };
+    updateLocUI();
+    return;
+  }
+  navigator.geolocation.watchPosition(
+    pos => {
+      const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+      const dist = distanceM(lat, lng, OFFICE_LAT, OFFICE_LNG);
+      const inOffice = dist <= OFFICE_RADIUS_M;
+      currentLocation = {
+        lat, lng, accuracy,
+        dist: Math.round(dist),
+        inOffice,
+        label: inOffice
+          ? `In office (${Math.round(dist)}m away)`
+          : `Outside office (${Math.round(dist)}m away)`
+      };
+      updateLocUI();
+      updateCamLocUI();
+    },
+    err => {
+      currentLocation = { inOffice: null, label: 'Location unavailable — ' + err.message };
+      updateLocUI();
+      updateCamLocUI();
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+  );
+}
+
+function updateLocUI() {
+  // Home screen location card
+  const icon   = document.getElementById('home-loc-icon');
+  const status = document.getElementById('home-loc-status');
+  const detail = document.getElementById('home-loc-detail');
+  if(!currentLocation) return;
+  if(currentLocation.inOffice === null) {
+    icon.className='loc-icon unknown'; icon.innerHTML='<i class="ti ti-map-pin-off"></i>';
+    status.textContent='Location unavailable';
+    detail.textContent=currentLocation.label;
+  } else if(currentLocation.inOffice) {
+    icon.className='loc-icon office'; icon.innerHTML='<i class="ti ti-building-skyscraper"></i>';
+    status.textContent='✅ In Office';
+    detail.textContent=currentLocation.label;
+  } else {
+    icon.className='loc-icon outside'; icon.innerHTML='<i class="ti ti-alert-triangle"></i>';
+    status.textContent='⚠ Outside Office';
+    detail.textContent=currentLocation.label;
+  }
+}
+
+function updateCamLocUI() {
+  const pill = document.getElementById('loc-pill');
+  const dot  = document.getElementById('loc-dot');
+  const txt  = document.getElementById('loc-text');
+  if(!pill) return;
+  if(!currentLocation) { txt.textContent='Getting location…'; return; }
+  if(currentLocation.inOffice === null) {
+    dot.className='loc-dot unknown'; txt.textContent='Location unavailable';
+  } else if(currentLocation.inOffice) {
+    dot.className='loc-dot office'; txt.textContent='In office';
+  } else {
+    dot.className='loc-dot outside'; txt.textContent=`Outside (${currentLocation.dist}m away)`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// LOGIN FLOW — Start verification from login screen
+// ══════════════════════════════════════════════════════════════════════
+// ── LOGIN SCREEN ACTION SELECTION ────────────────────────────────────────────
+let selectedAction = null;
+
+function selectAction(action) {
+  selectedAction = action;
+
+  // Update button highlight styles
+  ['in','out','leave'].forEach(a => {
+    const btn = document.getElementById('choice-'+a);
+    if(btn) btn.classList.toggle('selected', a===action);
+  });
+
+  const errEl = document.getElementById('login-err');
+  if(errEl) errEl.textContent = '';
+
+  if(action === 'leave') {
+    // For leave — set selectedEmp from dropdown if selected, but don't require it
+    // The leave modal has its own employee selector
+    const empVal = document.getElementById('emp-select')?.value;
+    if(empVal) {
+      const emp = employees.find(e=>(e.id||e.name)===empVal||e.id===empVal||e.name===empVal);
+      if(emp) selectedEmp = emp;
+    }
+    // Reset button highlight — leave doesn't need camera
+    setTimeout(()=>{
+      const lBtn=document.getElementById('choice-leave');
+      if(lBtn) lBtn.classList.remove('selected');
+      selectedAction = null;
+    }, 200);
+    showLeaveModal();
+    return;
+  }
+
+  // Clock in/out — require employee selection
+  const empVal = document.getElementById('emp-select')?.value;
+  if(!empVal) {
+    if(errEl) errEl.textContent = 'Please select your name first.';
+    document.getElementById('choice-'+action)?.classList.remove('selected');
+    selectedAction = null;
+    return;
+  }
+
+  // Show camera button
+  const btn = document.getElementById('login-btn');
+  if(btn) {
+    btn.style.display = 'block';
+    btn.innerHTML = action==='in'
+      ? '<i class="ti ti-camera" style="margin-right:8px"></i>Open Camera to Clock In'
+      : '<i class="ti ti-camera" style="margin-right:8px"></i>Open Camera to Clock Out';
+  }
+}
+
+function handleActionBtn() {
+  // Validate
+  const empVal = document.getElementById('emp-select')?.value;
+  if(!empVal) { document.getElementById('login-err').textContent='Please select your name.'; return; }
+  if(!selectedAction || selectedAction==='leave') return;
+  startVerification();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// PIN LOGIN
+// ══════════════════════════════════════════════════════════════════════
+let pinBuffer = '';
+
+function onEmpSelected() {
+  document.getElementById('login-err').textContent = '';
+}
+
+function proceedToPin() {
+  const empVal = document.getElementById('emp-select')?.value;
+  if(!empVal) {
+    document.getElementById('login-err').textContent = 'Please select your name.';
+    return;
+  }
+  const emp = employees.find(e=>(e.id||e.name)===empVal||e.id===empVal||e.name===empVal);
+  if(!emp) { document.getElementById('login-err').textContent = 'Employee not found.'; return; }
+  if(!emp.pin) {
+    document.getElementById('login-err').textContent = '⚠ No PIN set. Ask your admin to set your PIN in the ERP.';
+    return;
+  }
+  selectedEmp = emp;
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-emp-name').textContent = emp.name;
+  document.getElementById('login-step1').style.display = 'none';
+  document.getElementById('login-step2').style.display = 'block';
+  document.getElementById('pin-err').textContent = '';
+}
+
+function backToStep1() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('login-step1').style.display = 'block';
+  document.getElementById('login-step2').style.display = 'none';
+  selectedEmp = null;
+}
+
+function pinKey(k) {
+  if(k === '⌫') {
+    pinBuffer = pinBuffer.slice(0,-1);
+    updatePinDots();
+    return;
+  }
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updatePinDots();
+  if(pinBuffer.length === 4) {
+    setTimeout(checkPin, 150);
+  }
+}
+
+function updatePinDots() {
+  for(let i=0;i<4;i++) {
+    const dot = document.getElementById('pd'+i);
+    if(dot) {
+      dot.classList.toggle('filled', i < pinBuffer.length);
+      dot.classList.remove('error');
+    }
+  }
+}
+
+function checkPin() {
+  if(!selectedEmp) return;
+  if(pinBuffer === String(selectedEmp.pin)) {
+    // Correct — proceed to home screen
+    showScreen('home-screen');
+    initHomeScreen();
+  } else {
+    // Wrong PIN — shake dots red
+    for(let i=0;i<4;i++) {
+      const dot = document.getElementById('pd'+i);
+      if(dot) dot.classList.add('error');
+    }
+    document.getElementById('pin-err').textContent = 'Incorrect PIN. Try again.';
+    setTimeout(()=>{
+      pinBuffer = '';
+      updatePinDots();
+      document.getElementById('pin-err').textContent = '';
+    }, 1000);
+  }
+}
+
+// Override doLogout to go back to step 1
+function doLogout() {
+  pinBuffer = '';
+  selectedEmp = null;
+  todayRecord = null;
+  backToStep1();
+  showScreen('login-screen');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// HOME SCREEN TABS
+// ══════════════════════════════════════════════════════════════════════
+function switchHomeTab(tab) {
+  ['attendance','payslips','leaves'].forEach(t=>{
+    document.getElementById('home-tab-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if(tab==='payslips') renderMyPayslips();
+  if(tab==='leaves')   renderMyLeaves();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MY PAYSLIPS
+// ══════════════════════════════════════════════════════════════════════
+async function renderMyPayslips() {
+  const list = document.getElementById('payslip-list');
+  const cnt  = document.getElementById('payslip-count');
+  list.innerHTML = '<div class="rec-empty" style="padding:40px 20px;text-align:center;color:rgba(255,255,255,0.3)"><i class="ti ti-loader" style="font-size:24px;display:block;margin-bottom:8px"></i>Loading…</div>';
+
+  try {
+    const allPayrolls = await erpRead('payrolls');
+    const payrolls = allPayrolls.filter(p=>
+      recordBelongsTo(p, selectedEmp||{})
+    ).sort((a,b)=>(b.period||'').localeCompare(a.period||''));
+
+    if(cnt) cnt.textContent = payrolls.length+' payslip'+(payrolls.length!==1?'s':'');
+
+    if(!payrolls.length) {
+      list.innerHTML = '<div class="rec-empty" style="padding:40px 20px;text-align:center;color:rgba(255,255,255,0.3)"><i class="ti ti-cash" style="font-size:32px;display:block;margin-bottom:8px"></i>No payslips yet</div>';
+      return;
+    }
+
+    const f=v=>`₱${(+(v||0)).toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+    list.innerHTML = payrolls.map(p=>`
+      <div class="payslip-card">
+        <div class="payslip-card-hdr">
+          <div>
+            <div class="payslip-period">${p.period||'—'}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">Pay Date: ${p.payDate||'—'} · ${p.id}</div>
+          </div>
+          <span class="payslip-status ${p.status||'pending'}">${(p.status||'pending').toUpperCase()}</span>
+        </div>
+        <div class="payslip-body">
+          <div class="payslip-item"><label>Basic Pay</label><div class="val">${f(p.basicPay)}</div></div>
+          <div class="payslip-item"><label>OT Pay</label><div class="val">${f(p.overtime)}</div></div>
+          <div class="payslip-item"><label>Allowance</label><div class="val">${f(p.allowance)}</div></div>
+          <div class="payslip-item"><label>SSS</label><div class="val red">-${f(p.sss)}</div></div>
+          <div class="payslip-item"><label>PhilHealth</label><div class="val red">-${f(p.philhealth)}</div></div>
+          <div class="payslip-item"><label>W/Tax</label><div class="val red">-${f(p.withholdingTax)}</div></div>
+        </div>
+        <div class="payslip-net">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,255,255,0.4)">Net Pay</div>
+            <div style="font-size:22px;font-weight:800;color:#34c98a">${f(p.netPay)}</div>
+          </div>
+          <button class="payslip-print" data-pid="${p.id}">
+            <i class="ti ti-printer" style="margin-right:4px"></i>Print
+          </button>
+        </div>
+      </div>`).join('');
+
+    // Store payrolls for printing
+    window._myPayrollData = payrolls;
+    window._myEmpData = employees||[];
+
+    // Update print buttons
+    list.querySelectorAll('.payslip-print').forEach((btn,i)=>{
+      btn.onclick = ()=>printMyPayslip(payrolls[i]);
+    });
+
+  } catch(e) {
+    list.innerHTML = `<div class="rec-empty" style="padding:40px;text-align:center;color:#f87171">Error: ${e.message}</div>`;
+  }
+}
+
+function printMyPayslip(p) {
+  const cp = { name:'ANMOL PHARMACEUTICALS US CORP.' };
+  const emp = selectedEmp||{};
+  const f=v=>`₱${(+(v||0)).toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+  const w = window.open('','_blank','width=760,height=660');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Payslip</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:28px 36px;background:#fff}
+  .hdr{display:flex;justify-content:space-between;border-bottom:3px solid #111;padding-bottom:12px;margin-bottom:16px}
+  .co-name{font-size:15px;font-weight:800}
+  .slip-title{text-align:right}.slip-title h1{font-size:20px;font-weight:700}
+  .emp-block{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;background:#f7f7f5;padding:12px 14px;border-radius:6px;margin-bottom:16px;font-size:12px}
+  .lbl{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:0.06em}
+  .val{font-weight:600;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:12px}
+  th{padding:6px 8px;background:#f0f0f0;border-bottom:1.5px solid #333;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;text-align:left}
+  td{padding:6px 8px;border-bottom:0.5px solid #ddd}td:last-child{text-align:right;font-weight:500}
+  .total-row td{font-weight:700;border-top:1.5px solid #333;border-bottom:none}
+  .net-box{background:#111;color:#fff;padding:12px 14px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin:16px 0}
+  .net-box .lbl{color:#aaa;font-size:10px}.net-box .val{font-size:22px;font-weight:700}
+  .sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-top:28px}
+  .sig{text-align:center;border-top:1px solid #333;padding-top:6px;font-size:10px}
+  @page{margin:12mm}@media print{body{padding:0}}
+</style></head><body>
+<div class="hdr">
+  <div><div class="co-name">${cp.name}</div><div style="font-size:11px;color:#555">Payslip · ${p.period||'—'}</div></div>
+  <div class="slip-title"><h1>PAYSLIP</h1><p style="font-size:12px;color:#555">${p.id} · Paid: ${p.payDate||'—'}</p></div>
+</div>
+<div class="emp-block">
+  <div><div class="lbl">Employee</div><div class="val">${emp.name||p.empName||'—'}</div></div>
+  <div><div class="lbl">Department</div><div class="val">${emp.department||'—'}</div></div>
+  <div><div class="lbl">Position</div><div class="val">${emp.position||'—'}</div></div>
+  <div><div class="lbl">SSS No.</div><div class="val">${emp.sssNo||'—'}</div></div>
+  <div><div class="lbl">PhilHealth No.</div><div class="val">${emp.philhealthNo||'—'}</div></div>
+  <div><div class="lbl">TIN</div><div class="val">${emp.tinNo||'—'}</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<table><thead><tr><th colspan="2">Earnings</th></tr></thead><tbody>
+  <tr><td>Basic Pay</td><td>${f(p.basicPay)}</td></tr>
+  <tr><td>Overtime Pay</td><td>${f(p.overtime)}</td></tr>
+  <tr><td>Allowances</td><td>${f(p.allowance)}</td></tr>
+  <tr class="total-row"><td>Gross Pay</td><td>${f(p.grossPay)}</td></tr>
+</tbody></table>
+<table><thead><tr><th colspan="2">Deductions</th></tr></thead><tbody>
+  <tr><td>SSS</td><td>${f(p.sss)}</td></tr>
+  <tr><td>PhilHealth</td><td>${f(p.philhealth)}</td></tr>
+  <tr><td>Pag-IBIG</td><td>${f(p.pagibig)}</td></tr>
+  <tr><td>Withholding Tax</td><td>${f(p.withholdingTax)}</td></tr>
+  <tr class="total-row"><td>Total Deductions</td><td>${f(p.totalDeductions)}</td></tr>
+</tbody></table>
+</div>
+<div class="net-box">
+  <div><div class="lbl">Net Pay</div><div class="val">${f(p.netPay)}</div></div>
+  <div style="text-align:right"><div class="lbl">Status</div><div style="font-size:14px;font-weight:700;color:${p.status==='released'?'#34c98a':'#f5a623'}">${(p.status||'pending').toUpperCase()}</div></div>
+</div>
+<div class="sigs">
+  <div class="sig"><strong>${emp.name||'—'}</strong><br>Employee / Received by</div>
+  <div class="sig"><strong>__________________</strong><br>Prepared by</div>
+  <div class="sig"><strong>__________________</strong><br>Approved by</div>
+</div>
+<script>window.onload=()=>{window.print();}<\/script>
+</body></html>`);
+  w.document.close();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MY LEAVES
+// ══════════════════════════════════════════════════════════════════════
+async function renderMyLeaves() {
+  const list = document.getElementById('leave-list');
+  list.innerHTML = '<div class="rec-empty" style="padding:40px 20px;text-align:center;color:rgba(255,255,255,0.3)"><i class="ti ti-loader" style="font-size:24px;display:block;margin-bottom:8px"></i>Loading…</div>';
+
+  try {
+    const allLeaves = await erpRead('leaves');
+    const leaves = allLeaves.filter(l=>
+      recordBelongsTo(l, selectedEmp||{})
+    ).sort((a,b)=>(b.appliedOn||b.filedOn||'').localeCompare(a.appliedOn||a.filedOn||''));
+
+    if(!leaves.length) {
+      list.innerHTML = '<div class="rec-empty" style="padding:40px 20px;text-align:center;color:rgba(255,255,255,0.3)"><i class="ti ti-beach" style="font-size:32px;display:block;margin-bottom:8px"></i>No leave applications yet</div>';
+      return;
+    }
+
+    list.innerHTML = leaves.map(l=>{
+      const startDate = l.startDate||l.from||'—';
+      const endDate   = l.endDate||l.to||'—';
+      const leaveType = l.leaveTypeLabel||l.type||l.leaveType||'Leave';
+      const days      = l.days||(startDate!=='—'&&endDate!=='—'?Math.ceil((new Date(endDate)-new Date(startDate))/864e5)+1:'—');
+      const status    = l.status||'pending';
+      return `<div class="leave-card">
+        <div class="leave-card-top">
+          <div>
+            <div class="leave-type">${leaveType}</div>
+            <div class="leave-dates">${startDate} → ${endDate} · ${days} day${days!==1?'s':''}</div>
+          </div>
+          <span class="leave-badge ${status}">${status.toUpperCase()}</span>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5)">${l.reason||'—'}</div>
+        ${l.withPay===false?'<div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px">Without Pay</div>':''}
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = `<div class="rec-empty" style="padding:40px;text-align:center;color:#f87171">Error: ${e.message}</div>`;
+  }
+}
+
+function startVerification() {
+  const empId  = document.getElementById('emp-select').value;
+  const action = selectedAction || document.getElementById('action-select').value;
+  const errEl  = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  if(!empId) { errEl.textContent = 'Please select your name.'; return; }
+
+  const emp = employees.find(e=>(e.id||e.name)===empId) || employees.find(e=>e.id===empId||e.name===empId);
+  if(!emp) { errEl.textContent = 'Employee not found.'; return; }
+
+  if(!emp.photo) {
+    errEl.textContent = '⚠ No face photo on file. Ask admin to add your photo in the main ERP first.';
+    return;
+  }
+
+  selectedEmp = emp;
+  clockMode   = action==='leave' ? 'in' : action;
+  openCamera();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// HOME SCREEN — clock in/out from home
+// ══════════════════════════════════════════════════════════════════════
+function goClockIn() {
+  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
+  clockMode = 'in';
+  openCamera();
+}
+
+function goClockOut() {
+  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
+  clockMode = 'out';
+  openCamera();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CAMERA
+// ══════════════════════════════════════════════════════════════════════
+async function manualClockOverride() {
+  if(!confirm(`Clock ${clockMode==='in'?'In':'Out'} without face verification?\n\nThis will be recorded as UNVERIFIED and flagged for admin review.`)) return;
+  document.getElementById('cam-override')?.remove();
+  window._verifyFailCount = 0;
+  stopCamera();
+  await recordAttendance(false, 0);
+}
+
+function openCamera() {
+  window._verifyFailCount = 0;
+  window._countdownTimer = null;
+
+  // Set camera header
+  document.getElementById('cam-emp-name').textContent = selectedEmp?.name || '—';
+  document.getElementById('cam-action-label').textContent =
+    clockMode==='in' ? 'Clock In — Face Verification' : 'Clock Out — Face Verification';
+
+  // Reset UI
+  const oval = document.getElementById('face-oval');
+  oval.className = 'face-oval';
+  document.getElementById('cam-status').textContent = 'Position your face in the oval…';
+  const cdEl = document.getElementById('cam-countdown');
+  if(cdEl) cdEl.textContent = '';
+  const btn = document.getElementById('cam-btn');
+  if(btn) { btn.style.display='none'; btn.disabled=false; btn.onclick=captureAndVerify; }
+  document.getElementById('cam-override')?.remove();
+
+  updateCamLocUI();
+  showScreen('camera-screen');
+
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'user',
+      width:  { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false
+  }).then(stream => {
+    cameraStream = stream;
+    const video = document.getElementById('cam-video');
+    video.srcObject = stream;
+    // Start auto-verify countdown after camera is ready (1.5s for camera to focus)
+    setTimeout(startAutoVerifyCountdown, 1500);
+  }).catch(err => {
+    stopCamera();
+    toast('Camera error: ' + err.message, 'error');
+  });
+}
+
+function startAutoVerifyCountdown() {
+  const cdEl   = document.getElementById('cam-countdown');
+  const status = document.getElementById('cam-status');
+  if(!cdEl || !cameraStream) return;
+  let count = 3;
+  if(status) status.textContent = 'Hold still — verifying in…';
+  cdEl.textContent = count;
+  window._countdownTimer = setInterval(()=>{
+    count--;
+    if(count > 0) {
+      cdEl.textContent = count;
+    } else {
+      clearInterval(window._countdownTimer);
+      cdEl.textContent = '';
+      if(status) status.textContent = 'Verifying…';
+      captureAndVerify();
+    }
+  }, 1000);
+}
+
+function stopCamera() {
+  if(window._countdownTimer) { clearInterval(window._countdownTimer); window._countdownTimer=null; }
+  if(cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  if(selectedEmp) showScreen('home-screen');
+  else showScreen('login-screen');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CAPTURE & VERIFY
+// ══════════════════════════════════════════════════════════════════════
+async function captureAndVerify() {
+  const oval   = document.getElementById('face-oval');
+  const status = document.getElementById('cam-status');
+  const btn    = document.getElementById('cam-btn');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Verifying…';
+  oval.className = 'face-oval scanning';
+  status.textContent = 'Checking liveness & matching face…';
+
+  try {
+    const video  = document.getElementById('cam-video');
+    const canvas = document.getElementById('cam-canvas');
+    const ctx    = canvas.getContext('2d');
+    // Match what the user sees: zoomed out to 65%, mirrored horizontally
+    const scale  = 0.65;
+    const sw     = video.videoWidth  * scale;
+    const sh     = video.videoHeight * scale;
+    const sx     = (video.videoWidth  - sw) / 2;
+    const sy     = (video.videoHeight - sh) / 2;
+    // Draw mirrored + cropped
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    const liveBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+    const storedBase64 = selectedEmp.photo.includes(',')
+      ? selectedEmp.photo.split(',')[1]
+      : selectedEmp.photo;
+
+    // Call Claude AI via Cloudflare Worker
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: [
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:storedBase64 } },
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:liveBase64   } },
+            { type:'text', text:`You are a lenient biometric attendance verification system for a small business.
+
+IMAGE 1: Employee reference photo (may be low quality, old, or taken in different lighting)
+IMAGE 2: Live camera capture (real person trying to clock in)
+
+LIVENESS CHECK: Is Image 2 a real live person? Answer LIVE unless you clearly see a flat printed photo, phone screen, or obvious spoof. When in doubt, assume LIVE.
+
+IDENTITY MATCH: Compare permanent facial features — bone structure, eye spacing, nose shape. IGNORE lighting, angle (up to 45 degrees), expression, blur, hairstyle, glasses, age differences. Be GENEROUS — same person looks very different in different photos. If there is any reasonable chance it is the same person, say MATCH.
+
+Reply ONLY in this exact format:
+LIVENESS: LIVE
+MATCH: MATCH 80%
+
+or
+
+LIVENESS: LIVE
+MATCH: NO_MATCH 30%`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data  = await res.json();
+    const reply = (data.content||[]).map(b=>b.text||'').join('').trim().toUpperCase();
+    console.log('AI reply:', reply);
+
+    const isLive  = reply.includes('LIVENESS: LIVE') || (!reply.includes('LIVENESS: SPOOF') && reply.includes('MATCH'));
+    const isSpoof = reply.includes('LIVENESS: SPOOF');
+    const isMatch = reply.includes('MATCH: MATCH');
+    const pct     = parseInt((reply.match(/(\d+)%/)||[0,0])[1]) || 0;
+
+    if(isSpoof) {
+      oval.className = 'face-oval spoof';
+      status.textContent = '⚠️ Spoof detected — use your real live face';
+      btn.className = 'cam-btn spoof';
+      btn.innerHTML = '<i class="ti ti-refresh"></i>Try Again';
+      btn.disabled  = false;
+      btn.onclick   = captureAndVerify;
+      return;
+    }
+
+    if(isMatch && pct >= 45) {
+      // ✅ SUCCESS
+      oval.className = 'face-oval success';
+      status.textContent = `✅ Verified — ${pct}% match`;
+      btn.className = 'cam-btn success';
+      btn.innerHTML = `<i class="ti ti-check"></i>Confirmed`;
+      await new Promise(r=>setTimeout(r,1000));
+      stopCamera();
+      await recordAttendance(true, pct);
+    } else {
+      // ❌ NO MATCH or low confidence
+      window._verifyFailCount = (window._verifyFailCount||0) + 1;
+      oval.className = 'face-oval fail';
+      status.textContent = `❌ Not recognized (${pct}%). Reposition and hold still…`;
+      const cdEl2 = document.getElementById('cam-countdown');
+
+      // After 3 failed attempts — show manual override button
+      if(window._verifyFailCount >= 3) {
+        if(cdEl2) cdEl2.textContent = '';
+        const btn2 = document.getElementById('cam-btn');
+        if(btn2) { btn2.style.display='block'; btn2.innerHTML='<i class="ti ti-refresh"></i>Try Again'; btn2.disabled=false; btn2.onclick=()=>{window._verifyFailCount=0;startAutoVerifyCountdown();}; }
+        const existing = document.getElementById('cam-override');
+        if(!existing) {
+          const ob = document.createElement('div');
+          ob.id = 'cam-override';
+          ob.style.cssText = 'margin-top:14px;text-align:center';
+          ob.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px">Still having trouble?</div>
+          <button onclick="manualClockOverride()" style="padding:10px 24px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);border-radius:10px;color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">
+            <i class="ti ti-clock-play" style="margin-right:6px"></i>Clock ${clockMode==='in'?'In':'Out'} Without Verification
+          </button>`;
+          document.querySelector('.cam-controls')?.appendChild(ob);
+        }
+      } else {
+        // Auto-retry after 2 seconds
+        if(cdEl2) cdEl2.textContent = '';
+        status.textContent = `❌ Not recognized (${pct}%). Retrying in 2s…`;
+        setTimeout(()=>{
+          if(!cameraStream) return;
+          oval.className = 'face-oval';
+          status.textContent = 'Hold still — verifying in…';
+          startAutoVerifyCountdown();
+        }, 2000);
+      }
+    }
+
+  } catch(err) {
+    oval.className = 'face-oval fail';
+    status.textContent = 'Verification failed: ' + err.message;
+    btn.className = 'cam-btn fail';
+    btn.innerHTML = '<i class="ti ti-refresh"></i>Try Again';
+    btn.disabled  = false;
+    btn.onclick   = captureAndVerify;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// RECORD ATTENDANCE
+// ══════════════════════════════════════════════════════════════════════
+async function recordAttendance(verified, confidence) {
+  const empId   = selectedEmp.id;
+  const empName = selectedEmp.name;
+  const now     = timeNow();
+  const todayStr= today();
+  const loc     = currentLocation || {};
+
+  const locTag = loc.inOffice === true
+    ? 'office'
+    : loc.inOffice === false
+      ? 'outside'
+      : 'unknown';
+
+  const locLabel = loc.label || 'Unknown location';
+
+  try {
+    if(clockMode === 'in') {
+      // Check no duplicate — look in mobile collection AND ERP state
+      const existing = await db.collection('companies/anmol/attendance_mobile')
+        .where('empId','==',empId).get();
+      const allRecs = existing.docs.map(d=>({id:d.id,...d.data()}));
+      const dupToday = allRecs.find(r=>r.date===todayStr&&r.timeIn);
+
+      // Also check the ERP's live attendance collection
+      const erpAtt = await erpRead('attendance');
+      const erpDup = erpAtt.find(r=>
+        r.date===todayStr && r.timeIn &&
+        (r.empId===empId || r.empName===empName)
+      );
+
+      if(dupToday || erpDup) {
+        todayRecord = dupToday || erpDup;
+        await loadTodayStatus();
+        toast('Already clocked in today!','warning'); return;
+      }
+
+      // Next ID that doesn't collide with an existing ERP record
+      let attN = erpAtt.length + 1;
+      const attTaken = new Set(erpAtt.map(r=>String(r.id)));
+      while(attTaken.has('ATT-' + String(attN).padStart(4,'0'))) attN++;
+      const attId = 'ATT-' + String(attN).padStart(4,'0');
+
+      const rec = {
+        id:            attId,
+        empId,
+        empName,
+        date:          todayStr,
+        timeIn:        now,
+        timeOut:       '',
+        hoursWorked:   0,
+        overtimeHours: 0,
+        status:        'present',
+        verifiedFace:  verified,
+        faceConfidence: confidence,
+        locTag,
+        locLabel,
+        locLat:        loc.lat    || null,
+        locLng:        loc.lng    || null,
+        locDist:       loc.dist   || null,
+        inOffice:      loc.inOffice ?? null,
+        notes:         `Mobile app | ${locLabel} | face ${confidence}%`,
+        source:        'mobile_app',
+        createdAt:     new Date().toISOString()
+      };
+
+      // Save to mobile subcollection (for this app's queries)
+      const docRef = await db.collection('companies/anmol/attendance_mobile')
+        .doc(attId).set(rec).then(()=>({id:attId}));
+      todayRecord = { firestoreId: attId, ...rec };
+
+      // Sync directly to ERP attendance array
+      await syncToERP(rec);
+
+      const msg = loc.inOffice === false
+        ? `⚠ Clocked in at ${now} — Outside office (${loc.dist}m away)`
+        : `✅ Clocked in at ${now}`;
+      toast(msg, loc.inOffice===false?'warning':'success', 4000);
+
+    } else {
+      // CLOCK OUT — find today's record in mobile collection
+      const existing = await db.collection('companies/anmol/attendance_mobile')
+        .where('empId','==',empId).get();
+      const todayIn = existing.docs.map(d=>({firestoreId:d.id,...d.data()}))
+        .find(r=>r.date===todayStr&&r.timeIn&&!r.timeOut);
+
+      if(!todayIn) {
+        toast('No clock-in record found for today.','error'); return;
+      }
+
+      const [ih,im]=(todayIn.timeIn||'00:00').split(':').map(Number);
+      const [oh,om]=now.split(':').map(Number);
+      const mins=(oh*60+om)-(ih*60+im);
+      const hours=parseFloat(Math.max(0,mins/60).toFixed(2));
+      const ot   =parseFloat(Math.max(0,hours-8).toFixed(2));
+
+      // Update mobile collection
+      await db.collection('companies/anmol/attendance_mobile')
+        .doc(todayIn.id||todayIn.firestoreId).update({
+          timeOut:now, hoursWorked:hours, overtimeHours:ot,
+          locTagOut:locTag, locLabelOut:locLabel
+        });
+
+      // Sync clock-out to ERP
+      await syncTimeoutToERP(
+        todayIn.firestoreId,
+        todayIn.id,  // ATT-XXXX id
+        now, hours, ot, locTag, locLabel
+      );
+
+      toast(`👋 Clocked out at ${now} · ${hours}h worked`, 'success', 4000);
+      todayRecord = { ...todayIn, timeOut:now, hoursWorked:hours, overtimeHours:ot };
+    }
+
+    // Load home screen for this employee
+    await loadHomeScreen();
+
+  } catch(e) {
+    toast('Error saving: ' + e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ERP DATA LAYER — matches the main ERP's subcollection storage
+// ══════════════════════════════════════════════════════════════════════
+// The ERP stores each array as its own Firestore collection:
+//   anmol_data_attendance, anmol_data_leaves, anmol_data_payrolls, ...
+// Strict record→employee matching (mirrors the ERP)
+function recordBelongsTo(rec, emp) {
+  if(!rec || !emp) return false;
+  const norm = v => String(v==null?'':v).trim().toLowerCase();
+  if(rec.empId != null && emp.id != null && norm(rec.empId) === norm(emp.id)) return true;
+  if(rec.empId && emp.name && norm(rec.empId) === norm(emp.name)) return true;
+  const recHasId = rec.empId != null && String(rec.empId).trim() !== '';
+  if(!recHasId && rec.empName && emp.name && norm(rec.empName) === norm(emp.name)) return true;
+  return false;
+}
+
+const erpCol = key => `anmol_data_${key}`;
+
+// Read a whole ERP collection as an array
+async function erpRead(key) {
+  try {
+    const snap = await db.collection(erpCol(key)).get();
+    return snap.docs.map(d => { const {_t, ...r} = d.data(); return r; });
+  } catch(e) {
+    console.warn(`erpRead(${key}) failed:`, e.message);
+    return [];
+  }
+}
+
+// Write/overwrite a single record in an ERP collection
+async function erpWrite(key, record) {
+  if(!record || record.id == null) return false;
+  try {
+    const docId = String(record.id).replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,100);
+    await db.collection(erpCol(key)).doc(docId).set({ ...record, _t: Date.now() });
+    // Nudge the ERP's listener so open sessions refresh
+    try {
+      await db.doc('companies/anmol_state_meta').set({
+        updatedAt: Date.now(),
+        updatedBy: (record.empName || 'Mobile') + ' (Mobile)',
+        deviceId: 'mobile_' + (record.empId || 'app')
+      }, { merge: true });
+    } catch(e) {}
+    return true;
+  } catch(e) {
+    console.warn(`erpWrite(${key}) failed:`, e.message);
+    return false;
+  }
+}
+
+// Merge fields into an existing ERP record
+async function erpUpdate(key, id, fields) {
+  if(id == null) return false;
+  try {
+    const docId = String(id).replace(/[^a-zA-Z0-9_-]/g,'_').substring(0,100);
+    await db.collection(erpCol(key)).doc(docId).set({ ...fields, _t: Date.now() }, { merge: true });
+    try {
+      await db.doc('companies/anmol_state_meta').set({
+        updatedAt: Date.now(), updatedBy: 'Mobile', deviceId: 'mobile_update'
+      }, { merge: true });
+    } catch(e) {}
+    return true;
+  } catch(e) {
+    console.warn(`erpUpdate(${key}) failed:`, e.message);
+    return false;
+  }
+}
+
+// ── SYNC CLOCK-IN TO ERP ──────────────────────────────────────────────
+async function syncToERP(rec) {
+  const ok = await erpWrite('attendance', rec);
+  console.log(ok ? 'Synced clock-in to ERP: ' + rec.id : 'Clock-in ERP sync failed: ' + rec.id);
+  return ok;
+}
+
+// ── SYNC CLOCK-OUT TO ERP ─────────────────────────────────────────────
+async function syncTimeoutToERP(mobileDocId, attId, timeOut, hours, ot, locTag, locLabel) {
+  const ok = await erpUpdate('attendance', attId, {
+    timeOut, hoursWorked: hours, overtimeHours: ot,
+    locTagOut: locTag, locLabelOut: locLabel
+  });
+  console.log(ok ? 'Synced clock-out to ERP: ' + attId : 'Clock-out ERP sync failed: ' + attId);
+  return ok;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// HOME SCREEN TABS
+// ══════════════════════════════════════════════════════════════════════
+function switchHomeTab(tab) {
+  ['attendance','payslips','leaves'].forEach(t=>{
+    document.getElementById('home-tab-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if(tab==='payslips') renderMyPayslips();
+  if(tab==='leaves')   renderMyLeaves();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MY PAYSLIPS
+// ══════════════════════════════════════════════════════════════════════
+
+function printMyPayslip(p) {
+  const cp = { name:'ANMOL PHARMACEUTICALS US CORP.' };
+  const emp = selectedEmp||{};
+  const f=v=>`₱${(+(v||0)).toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+  const w = window.open('','_blank','width=760,height=660');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Payslip</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:28px 36px;background:#fff}
+  .hdr{display:flex;justify-content:space-between;border-bottom:3px solid #111;padding-bottom:12px;margin-bottom:16px}
+  .co-name{font-size:15px;font-weight:800}
+  .slip-title{text-align:right}.slip-title h1{font-size:20px;font-weight:700}
+  .emp-block{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;background:#f7f7f5;padding:12px 14px;border-radius:6px;margin-bottom:16px;font-size:12px}
+  .lbl{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:0.06em}
+  .val{font-weight:600;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:12px}
+  th{padding:6px 8px;background:#f0f0f0;border-bottom:1.5px solid #333;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;text-align:left}
+  td{padding:6px 8px;border-bottom:0.5px solid #ddd}td:last-child{text-align:right;font-weight:500}
+  .total-row td{font-weight:700;border-top:1.5px solid #333;border-bottom:none}
+  .net-box{background:#111;color:#fff;padding:12px 14px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin:16px 0}
+  .net-box .lbl{color:#aaa;font-size:10px}.net-box .val{font-size:22px;font-weight:700}
+  .sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-top:28px}
+  .sig{text-align:center;border-top:1px solid #333;padding-top:6px;font-size:10px}
+  @page{margin:12mm}@media print{body{padding:0}}
+</style></head><body>
+<div class="hdr">
+  <div><div class="co-name">${cp.name}</div><div style="font-size:11px;color:#555">Payslip · ${p.period||'—'}</div></div>
+  <div class="slip-title"><h1>PAYSLIP</h1><p style="font-size:12px;color:#555">${p.id} · Paid: ${p.payDate||'—'}</p></div>
+</div>
+<div class="emp-block">
+  <div><div class="lbl">Employee</div><div class="val">${emp.name||p.empName||'—'}</div></div>
+  <div><div class="lbl">Department</div><div class="val">${emp.department||'—'}</div></div>
+  <div><div class="lbl">Position</div><div class="val">${emp.position||'—'}</div></div>
+  <div><div class="lbl">SSS No.</div><div class="val">${emp.sssNo||'—'}</div></div>
+  <div><div class="lbl">PhilHealth No.</div><div class="val">${emp.philhealthNo||'—'}</div></div>
+  <div><div class="lbl">TIN</div><div class="val">${emp.tinNo||'—'}</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<table><thead><tr><th colspan="2">Earnings</th></tr></thead><tbody>
+  <tr><td>Basic Pay</td><td>${f(p.basicPay)}</td></tr>
+  <tr><td>Overtime Pay</td><td>${f(p.overtime)}</td></tr>
+  <tr><td>Allowances</td><td>${f(p.allowance)}</td></tr>
+  <tr class="total-row"><td>Gross Pay</td><td>${f(p.grossPay)}</td></tr>
+</tbody></table>
+<table><thead><tr><th colspan="2">Deductions</th></tr></thead><tbody>
+  <tr><td>SSS</td><td>${f(p.sss)}</td></tr>
+  <tr><td>PhilHealth</td><td>${f(p.philhealth)}</td></tr>
+  <tr><td>Pag-IBIG</td><td>${f(p.pagibig)}</td></tr>
+  <tr><td>Withholding Tax</td><td>${f(p.withholdingTax)}</td></tr>
+  <tr class="total-row"><td>Total Deductions</td><td>${f(p.totalDeductions)}</td></tr>
+</tbody></table>
+</div>
+<div class="net-box">
+  <div><div class="lbl">Net Pay</div><div class="val">${f(p.netPay)}</div></div>
+  <div style="text-align:right"><div class="lbl">Status</div><div style="font-size:14px;font-weight:700;color:${p.status==='released'?'#34c98a':'#f5a623'}">${(p.status||'pending').toUpperCase()}</div></div>
+</div>
+<div class="sigs">
+  <div class="sig"><strong>${emp.name||'—'}</strong><br>Employee / Received by</div>
+  <div class="sig"><strong>__________________</strong><br>Prepared by</div>
+  <div class="sig"><strong>__________________</strong><br>Approved by</div>
+</div>
+<script>window.onload=()=>{window.print();}<\/script>
+</body></html>`);
+  w.document.close();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MY LEAVES
+// ══════════════════════════════════════════════════════════════════════
+
+function startVerification() {
+  const empId  = document.getElementById('emp-select').value;
+  const action = selectedAction || document.getElementById('action-select').value;
+  const errEl  = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  if(!empId) { errEl.textContent = 'Please select your name.'; return; }
+
+  const emp = employees.find(e=>(e.id||e.name)===empId) || employees.find(e=>e.id===empId||e.name===empId);
+  if(!emp) { errEl.textContent = 'Employee not found.'; return; }
+
+  if(!emp.photo) {
+    errEl.textContent = '⚠ No face photo on file. Ask admin to add your photo in the main ERP first.';
+    return;
+  }
+
+  selectedEmp = emp;
+  clockMode   = action==='leave' ? 'in' : action;
+  openCamera();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// HOME SCREEN — clock in/out from home
+// ══════════════════════════════════════════════════════════════════════
+function goClockIn() {
+  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
+  clockMode = 'in';
+  openCamera();
+}
+
+function goClockOut() {
+  if(!selectedEmp?.photo) { toast('No face photo on file.','error'); return; }
+  clockMode = 'out';
+  openCamera();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CAMERA
+// ══════════════════════════════════════════════════════════════════════
+async function manualClockOverride() {
+  if(!confirm(`Clock ${clockMode==='in'?'In':'Out'} without face verification?\n\nThis will be recorded as UNVERIFIED and flagged for admin review.`)) return;
+  document.getElementById('cam-override')?.remove();
+  window._verifyFailCount = 0;
+  stopCamera();
+  await recordAttendance(false, 0);
+}
+
+function openCamera() {
+  window._verifyFailCount = 0;
+  window._countdownTimer = null;
+
+  // Set camera header
+  document.getElementById('cam-emp-name').textContent = selectedEmp?.name || '—';
+  document.getElementById('cam-action-label').textContent =
+    clockMode==='in' ? 'Clock In — Face Verification' : 'Clock Out — Face Verification';
+
+  // Reset UI
+  const oval = document.getElementById('face-oval');
+  oval.className = 'face-oval';
+  document.getElementById('cam-status').textContent = 'Position your face in the oval…';
+  const cdEl = document.getElementById('cam-countdown');
+  if(cdEl) cdEl.textContent = '';
+  const btn = document.getElementById('cam-btn');
+  if(btn) { btn.style.display='none'; btn.disabled=false; btn.onclick=captureAndVerify; }
+  document.getElementById('cam-override')?.remove();
+
+  updateCamLocUI();
+  showScreen('camera-screen');
+
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'user',
+      width:  { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false
+  }).then(stream => {
+    cameraStream = stream;
+    const video = document.getElementById('cam-video');
+    video.srcObject = stream;
+    // Start auto-verify countdown after camera is ready (1.5s for camera to focus)
+    setTimeout(startAutoVerifyCountdown, 1500);
+  }).catch(err => {
+    stopCamera();
+    toast('Camera error: ' + err.message, 'error');
+  });
+}
+
+function startAutoVerifyCountdown() {
+  const cdEl   = document.getElementById('cam-countdown');
+  const status = document.getElementById('cam-status');
+  if(!cdEl || !cameraStream) return;
+  let count = 3;
+  if(status) status.textContent = 'Hold still — verifying in…';
+  cdEl.textContent = count;
+  window._countdownTimer = setInterval(()=>{
+    count--;
+    if(count > 0) {
+      cdEl.textContent = count;
+    } else {
+      clearInterval(window._countdownTimer);
+      cdEl.textContent = '';
+      if(status) status.textContent = 'Verifying…';
+      captureAndVerify();
+    }
+  }, 1000);
+}
+
+function stopCamera() {
+  if(window._countdownTimer) { clearInterval(window._countdownTimer); window._countdownTimer=null; }
+  if(cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  if(selectedEmp) showScreen('home-screen');
+  else showScreen('login-screen');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CAPTURE & VERIFY
+// ══════════════════════════════════════════════════════════════════════
+async function captureAndVerify() {
+  const oval   = document.getElementById('face-oval');
+  const status = document.getElementById('cam-status');
+  const btn    = document.getElementById('cam-btn');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Verifying…';
+  oval.className = 'face-oval scanning';
+  status.textContent = 'Checking liveness & matching face…';
+
+  try {
+    const video  = document.getElementById('cam-video');
+    const canvas = document.getElementById('cam-canvas');
+    const ctx    = canvas.getContext('2d');
+    // Match what the user sees: zoomed out to 65%, mirrored horizontally
+    const scale  = 0.65;
+    const sw     = video.videoWidth  * scale;
+    const sh     = video.videoHeight * scale;
+    const sx     = (video.videoWidth  - sw) / 2;
+    const sy     = (video.videoHeight - sh) / 2;
+    // Draw mirrored + cropped
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    const liveBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+    const storedBase64 = selectedEmp.photo.includes(',')
+      ? selectedEmp.photo.split(',')[1]
+      : selectedEmp.photo;
+
+    // Call Claude AI via Cloudflare Worker
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: [
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:storedBase64 } },
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:liveBase64   } },
+            { type:'text', text:`You are a lenient biometric attendance verification system for a small business.
+
+IMAGE 1: Employee reference photo (may be low quality, old, or taken in different lighting)
+IMAGE 2: Live camera capture (real person trying to clock in)
+
+LIVENESS CHECK: Is Image 2 a real live person? Answer LIVE unless you clearly see a flat printed photo, phone screen, or obvious spoof. When in doubt, assume LIVE.
+
+IDENTITY MATCH: Compare permanent facial features — bone structure, eye spacing, nose shape. IGNORE lighting, angle (up to 45 degrees), expression, blur, hairstyle, glasses, age differences. Be GENEROUS — same person looks very different in different photos. If there is any reasonable chance it is the same person, say MATCH.
+
+Reply ONLY in this exact format:
+LIVENESS: LIVE
+MATCH: MATCH 80%
+
+or
+
+LIVENESS: LIVE
+MATCH: NO_MATCH 30%`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data  = await res.json();
+    const reply = (data.content||[]).map(b=>b.text||'').join('').trim().toUpperCase();
+    console.log('AI reply:', reply);
+
+    const isLive  = reply.includes('LIVENESS: LIVE') || (!reply.includes('LIVENESS: SPOOF') && reply.includes('MATCH'));
+    const isSpoof = reply.includes('LIVENESS: SPOOF');
+    const isMatch = reply.includes('MATCH: MATCH');
+    const pct     = parseInt((reply.match(/(\d+)%/)||[0,0])[1]) || 0;
+
+    if(isSpoof) {
+      oval.className = 'face-oval spoof';
+      status.textContent = '⚠️ Spoof detected — use your real live face';
+      btn.className = 'cam-btn spoof';
+      btn.innerHTML = '<i class="ti ti-refresh"></i>Try Again';
+      btn.disabled  = false;
+      btn.onclick   = captureAndVerify;
+      return;
+    }
+
+    if(isMatch && pct >= 45) {
+      // ✅ SUCCESS
+      oval.className = 'face-oval success';
+      status.textContent = `✅ Verified — ${pct}% match`;
+      btn.className = 'cam-btn success';
+      btn.innerHTML = `<i class="ti ti-check"></i>Confirmed`;
+      await new Promise(r=>setTimeout(r,1000));
+      stopCamera();
+      await recordAttendance(true, pct);
+    } else {
+      // ❌ NO MATCH or low confidence
+      window._verifyFailCount = (window._verifyFailCount||0) + 1;
+      oval.className = 'face-oval fail';
+      status.textContent = `❌ Not recognized (${pct}%). Reposition and hold still…`;
+      const cdEl2 = document.getElementById('cam-countdown');
+
+      // After 3 failed attempts — show manual override button
+      if(window._verifyFailCount >= 3) {
+        if(cdEl2) cdEl2.textContent = '';
+        const btn2 = document.getElementById('cam-btn');
+        if(btn2) { btn2.style.display='block'; btn2.innerHTML='<i class="ti ti-refresh"></i>Try Again'; btn2.disabled=false; btn2.onclick=()=>{window._verifyFailCount=0;startAutoVerifyCountdown();}; }
+        const existing = document.getElementById('cam-override');
+        if(!existing) {
+          const ob = document.createElement('div');
+          ob.id = 'cam-override';
+          ob.style.cssText = 'margin-top:14px;text-align:center';
+          ob.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px">Still having trouble?</div>
+          <button onclick="manualClockOverride()" style="padding:10px 24px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);border-radius:10px;color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer">
+            <i class="ti ti-clock-play" style="margin-right:6px"></i>Clock ${clockMode==='in'?'In':'Out'} Without Verification
+          </button>`;
+          document.querySelector('.cam-controls')?.appendChild(ob);
+        }
+      } else {
+        // Auto-retry after 2 seconds
+        if(cdEl2) cdEl2.textContent = '';
+        status.textContent = `❌ Not recognized (${pct}%). Retrying in 2s…`;
+        setTimeout(()=>{
+          if(!cameraStream) return;
+          oval.className = 'face-oval';
+          status.textContent = 'Hold still — verifying in…';
+          startAutoVerifyCountdown();
+        }, 2000);
+      }
+    }
+
+  } catch(err) {
+    oval.className = 'face-oval fail';
+    status.textContent = 'Verification failed: ' + err.message;
+    btn.className = 'cam-btn fail';
+    btn.innerHTML = '<i class="ti ti-refresh"></i>Try Again';
+    btn.disabled  = false;
+    btn.onclick   = captureAndVerify;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// RECORD ATTENDANCE
+// ══════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════
+// SYNC TO MAIN ERP (writes directly into companies/anmol attendance array)
+// ══════════════════════════════════════════════════════════════════════
+
+
+// ══════════════════════════════════════════════════════════════════════
+// HOME SCREEN
+// ══════════════════════════════════════════════════════════════════════
+async function loadHomeScreen() {
+  showScreen('home-screen');
+
+  // Header
+  const emp = selectedEmp;
+  document.getElementById('home-greeting').textContent = greeting();
+  document.getElementById('home-name').textContent     = emp.name;
+  document.getElementById('home-dept').textContent     = emp.department || emp.position || '';
+
+  // Avatar
+  const avatarEl = document.getElementById('home-avatar');
+  if(emp.photo) {
+    avatarEl.innerHTML = `<img src="${emp.photo}" alt="${emp.name}">`;
+  } else {
+    avatarEl.textContent = (emp.name||'?').charAt(0).toUpperCase();
+  }
+
+  // Load today and history
+  await Promise.all([loadTodayStatus(), loadHistory()]);
+  updateLocUI();
+}
+
+async function loadTodayStatus() {
+  try {
+    const snap = await db.collection('companies/anmol/attendance_mobile')
+      .where('empId','==',selectedEmp.id).get();
+    let all = snap.docs.map(d=>({ firestoreId:d.id, ...d.data() }));
+    todayRecord = all.find(r=>r.date===today()) || null;
+
+    // Fallback: check by empName if not found by id
+    if(!todayRecord) {
+      const snap2 = await db.collection('companies/anmol/attendance_mobile')
+        .where('empName','==',selectedEmp.name).get();
+      all = snap2.docs.map(d=>({ firestoreId:d.id, ...d.data() }));
+      todayRecord = all.find(r=>r.date===today()) || null;
+    }
+
+    // Fallback 2: check ERP state directly
+    if(!todayRecord) {
+      const erpAtt = await erpRead('attendance');
+      const td = today();
+      todayRecord = erpAtt.find(r=>
+        r.date===td && recordBelongsTo(r, selectedEmp)
+      ) || null;
+    }
+  } catch(e) { todayRecord=null; console.error('loadTodayStatus:',e); }
+
+  const badge   = document.getElementById('today-badge');
+  const bigTime = document.getElementById('today-timein-big');
+  const inEl    = document.getElementById('today-in');
+  const outEl   = document.getElementById('today-out');
+  const hoursEl = document.getElementById('today-hours');
+  const btnIn   = document.getElementById('btn-in');
+  const btnOut  = document.getElementById('btn-out');
+
+  if(!todayRecord) {
+    badge.textContent='Not Recorded'; badge.className='status-badge absent';
+    bigTime.textContent='—'; bigTime.className='status-time muted';
+    inEl.textContent='—'; inEl.className='time-box-val muted';
+    outEl.textContent='—'; outEl.className='time-box-val muted';
+    hoursEl.textContent='—'; hoursEl.className='time-box-val muted';
+    btnIn.classList.remove('disabled');
+    btnOut.classList.add('disabled');
+    return;
+  }
+
+  const done = !!todayRecord.timeOut;
+  badge.textContent = done?'Complete':'Clocked In';
+  badge.className   = 'status-badge ' + (done?'done':'present');
+  bigTime.textContent = todayRecord.timeIn||'—';
+  bigTime.className = 'status-time';
+  inEl.textContent  = todayRecord.timeIn||'—'; inEl.className='time-box-val';
+  outEl.textContent = todayRecord.timeOut||'—'; outEl.className='time-box-val'+(todayRecord.timeOut?'':' muted');
+  hoursEl.textContent = todayRecord.hoursWorked ? (+todayRecord.hoursWorked).toFixed(2)+'h' : '—';
+  hoursEl.className = 'time-box-val' + (todayRecord.hoursWorked?'':' muted');
+
+  btnIn.classList.add('disabled');
+  btnOut.classList[done?'add':'remove']('disabled');
+}
+
+async function loadAttendanceRecords() {
+  const listEl = document.getElementById('rec-list');
+  if(!listEl) return;
+  listEl.innerHTML = '<div class="rec-empty">Loading…</div>';
+  try {
+    // Query by empId (mobile app primary)
+    let records = [];
+    const snap = await db.collection('companies/anmol/attendance_mobile')
+      .where('empId','==',selectedEmp.id||selectedEmp.name).get();
+    records = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    // Also check by empName in case empId differs
+    if(!records.length || records.length < 3) {
+      const snap2 = await db.collection('companies/anmol/attendance_mobile')
+        .where('empName','==',selectedEmp.name).get();
+      snap2.docs.forEach(d=>{
+        const r={id:d.id,...d.data()};
+        if(!records.find(x=>x.id===r.id)) records.push(r);
+      });
+    }
+
+    // Also pull from main ERP state.attendance
+    try {
+      const erpState = { attendance: await erpRead('attendance') };
+      (erpState.attendance||[]).forEach(r=>{
+        const match = recordBelongsTo(r, selectedEmp);
+        if(match && !records.find(x=>x.id===r.id || (x.date===r.date&&x.timeIn===r.timeIn))) {
+          records.push(r);
+        }
+      });
+    } catch(e) { /* ERP state fallback optional */ }
+
+    records.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+    const cntEl = document.getElementById('rec-count');
+    if(cntEl) cntEl.textContent = records.length + ' record' + (records.length!==1?'s':'');
+
+    if(!records.length) {
+      listEl.innerHTML = '<div class="rec-empty">No attendance records yet.<br>Clock in to get started.</div>';
+      return;
+    }
+
+    listEl.innerHTML = records.map(r=>{
+      const d    = new Date((r.date||'')+'T00:00');
+      const day  = isNaN(d)?'—':String(d.getDate()).padStart(2,'0');
+      const mon  = isNaN(d)?'—':d.toLocaleString('en',{month:'short'});
+      const hrs  = r.hoursWorked ? (+r.hoursWorked).toFixed(2)+'h' : '—';
+      const inOffice = r.inOffice===true ? '🏢 Office' : r.inOffice===false ? '⚠ Outside' : '';
+      return `<div class="rec-item">
+        <div class="rec-date-col">
+          <div class="rec-day">${day}</div>
+          <div class="rec-month">${mon}</div>
+        </div>
+        <div class="rec-divider"></div>
+        <div class="rec-details">
+          <div class="rec-name-row">
+            <span style="font-size:13px;font-weight:600">${r.date||'—'}</span>
+            <span class="rec-badge ${r.status||'present'}">${(r.status||'present').toUpperCase()}</span>
+          </div>
+          <div class="rec-times">
+            <span><i class="ti ti-clock-play" style="font-size:11px;margin-right:3px;color:var(--green)"></i>${r.timeIn||'—'}</span>
+            <span><i class="ti ti-clock-stop" style="font-size:11px;margin-right:3px;color:var(--red)"></i>${r.timeOut||'—'}</span>
+            <span style="color:var(--accent2)">${hrs}</span>
+          </div>
+          ${inOffice?`<div class="rec-loc"><i class="ti ti-map-pin" style="font-size:10px"></i>${inOffice}</div>`:''}
+          ${r.verifiedFace?'<div class="rec-verified"><i class="ti ti-shield-check" style="font-size:10px"></i>Face verified '+(r.faceConfidence?r.faceConfidence+'%':'')+'</div>':''}
+          ${r.source==='mobile_app'?'':'<div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px">📋 Recorded from ERP</div>'}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div class="rec-empty">Could not load records.<br>${e.message}</div>`;
+  }
+}
+
+// Keep old name as alias for backward compatibility
+const loadHistory = loadAttendanceRecords;
+
+// ══════════════════════════════════════════════════════════════════════
+// LOGOUT — back to login
+// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
+// LEAVE APPLICATION
+// ══════════════════════════════════════════════════════════════════════
+function showLeaveModal() {
+  const overlay = document.getElementById('leave-overlay');
+  if(!overlay) { console.error('leave-overlay not found'); return; }
+  overlay.style.display = 'flex';
+  overlay.style.zIndex  = '9999';
+
+  // Set dates after overlay is visible (rAF ensures DOM is painted first)
+  requestAnimationFrame(()=>{
+    const t = today();
+    const fromEl = document.getElementById('leave-from');
+    const toEl   = document.getElementById('leave-to');
+    if(fromEl) fromEl.value = t;
+    if(toEl)   toEl.value   = t;
+
+    const errEl = document.getElementById('leave-err');
+    if(errEl) errEl.style.display = 'none';
+
+    const reasonEl = document.getElementById('leave-reason');
+    if(reasonEl) reasonEl.value = '';
+
+    const btn = document.getElementById('leave-submit-btn');
+    if(btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-send" style="margin-right:8px"></i>Submit Leave Application';
+    }
+
+    // Pre-fill employee selector
+    const leaveEmpSel = document.getElementById('leave-emp-select');
+    if(leaveEmpSel) {
+      leaveEmpSel.innerHTML = '<option value="">— Select your name —</option>' +
+        employees.map(e=>`<option value="${e.id||e.name}" ${selectedEmp&&(e.id===selectedEmp.id||e.name===selectedEmp.name)?'selected':''}>${e.name}${e.department?' — '+e.department:''}</option>`).join('');
+    }
+  });
+}
+
+function hideLeaveModal() {
+  document.getElementById('leave-overlay').style.display = 'none';
+  // Reset login screen selection if called from login
+  if(!selectedEmp) {
+    selectedAction = null;
+    ['in','out','leave'].forEach(a=>document.getElementById('choice-'+a)?.classList.remove('selected'));
+    document.getElementById('login-btn').style.display='none';
+  }
+}
+
+async function submitLeave() {
+  // Get employee — from leave modal selector first, then selectedEmp fallback
+  const leaveEmpVal = document.getElementById('leave-emp-select')?.value;
+  let leaveEmp = null;
+  if(leaveEmpVal) {
+    leaveEmp = employees.find(e=>(e.id||e.name)===leaveEmpVal||e.id===leaveEmpVal||e.name===leaveEmpVal);
+  }
+  if(!leaveEmp && selectedEmp) leaveEmp = selectedEmp;
+  if(!leaveEmp) {
+    const errEl=document.getElementById('leave-err');
+    errEl.textContent='Please select your name.'; errEl.style.display='block'; return;
+  }
+
+  const leaveType = document.getElementById('leave-type')?.value||'sick';
+  const from      = (document.getElementById('leave-from')?.value||'').trim();
+  const to        = (document.getElementById('leave-to')?.value||'').trim();
+  const reason    = (document.getElementById('leave-reason')?.value||'').trim();
+  const withPay   = document.querySelector('input[name="leave-pay"]:checked')?.value === 'yes';
+  const errEl     = document.getElementById('leave-err');
+  const btn       = document.getElementById('leave-submit-btn');
+
+  errEl.style.display = 'none';
+
+  if(!from) { errEl.textContent='Please select a start date.'; errEl.style.display='block'; return; }
+  if(!to)   { errEl.textContent='Please select an end date.'; errEl.style.display='block'; return; }
+  if(from > to) { errEl.textContent='Start date must be on or before end date.'; errEl.style.display='block'; return; }
+  if(!reason)   { errEl.textContent='Please provide a reason for the leave.'; errEl.style.display='block'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px"></span>Submitting…';
+
+  try {
+    const existingLeaves = await erpRead('leaves');
+
+    // Calculate days — use date-only strings to avoid timezone issues
+    const [fy,fm,fd] = from.split('-').map(Number);
+    const [ty,tm,td] = to.split('-').map(Number);
+    const d1 = new Date(fy,fm-1,fd);
+    const d2 = new Date(ty,tm-1,td);
+    const days = Math.round((d2-d1)/864e5)+1;
+
+    const leaveTypeLabels = { sick:'Sick Leave', vacation:'Vacation Leave', emergency:'Emergency Leave', maternity:'Maternity Leave', paternity:'Paternity Leave', solo_parent:'Solo Parent Leave', unpaid:'Unpaid Leave', other:'Other' };
+
+    // Next ID that doesn't collide with existing records
+    let n = existingLeaves.length + 1;
+    const taken = new Set(existingLeaves.map(l=>String(l.id)));
+    while(taken.has('LV-'+String(n).padStart(4,'0'))) n++;
+    const id = 'LV-'+String(n).padStart(4,'0');
+
+    const leave = {
+      id, empId:leaveEmp.id||leaveEmp.name, empName:leaveEmp.name,
+      department:leaveEmp.department||'',
+      leaveType, leaveTypeLabel:leaveTypeLabels[leaveType]||leaveType,
+      type: leaveTypeLabels[leaveType]||leaveType,
+      from, to,
+      startDate: from, endDate: to,
+      days, reason, withPay,
+      status:'pending',
+      appliedOn:today(), filedOn:today(),
+      appliedAt:new Date().toISOString(),
+      source:'mobile_app'
+    };
+
+    const ok = await erpWrite('leaves', leave);
+    if(!ok) throw new Error('Could not save to the ERP. Check your connection.');
+
+    hideLeaveModal();
+    // Reset selected emp if filed from login screen
+    if(!document.getElementById('home-screen').classList.contains('active')) {
+      selectedEmp = null;
+      selectedAction = null;
+      ['in','out','leave'].forEach(a=>document.getElementById('choice-'+a)?.classList.remove('selected'));
+      document.getElementById('login-btn').style.display='none';
+    }
+    toast(`✅ Leave application submitted! ${days} day(s) — pending approval.`, 'success', 4000);
+
+  } catch(e) {
+    errEl.textContent = 'Error submitting leave: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send" style="margin-right:8px"></i>Submit Leave Application';
+  }
+}
+
+function doLogout() {
+  selectedEmp  = null;
+  todayRecord  = null;
+  clockMode    = 'in';
+  document.getElementById('emp-select').value    = '';
+  document.getElementById('action-select').value = 'in';
+  document.getElementById('login-err').textContent = '';
+  showScreen('login-screen');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════════════════════════
+window.addEventListener('load', initFirebase);
+</script>
+</body>
+</html>
